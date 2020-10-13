@@ -1,0 +1,5 @@
+<launch>
+  <node pkg = "thruster_allocation" name = "Thruster_Allocation" type= "thruster_allocation.py">
+    <rosparam command="load" file="$(find thruster_allocation)/scripts/thparam.yaml"/>
+  </node>
+</launch>

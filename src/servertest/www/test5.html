@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Copatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Pimouse</title>
+        <!-- Bootstrap-->
+        <link href="css/bootstrap-grid.min.css" rel="stylesheet" >
+    </head>
+    <body>
+        <nav class="navbar navbar-default navbar-fixed-top">
+            <div class="container">
+                <div class="navbar-header">
+                    <a class="navbar-brand" href="#">test2</a>
+                </div>
+            </div>
+        </nav>
+        <div class="container" style="padding-top: 60px">
+            <div class="row">
+                <div class="col-md-4" id="joy">
+                    <h2>Joy Infomation</h2>
+                    <table class="table table-striped">
+                        <tr><th>Channel</th><td><th>Value</th></td></tr>
+                        <tr><td>ch0</td><td id="joy_ch0"></td></tr>
+                        <tr><td>ch1</td><td id="joy_ch1"></td></tr>
+                        <tr><td>ch2</td><td id="joy_ch2"></td></tr>
+                        <tr><td>ch3</td><td id="joy_ch3"></td></tr>
+                    </table>
+                </div>
+                <div class="col-md-4">
+                    <h2>camera</h2>
+                    <object id="camstream" style="width:1080px;height:720px"></object>
+                </div>
+                <div class="col-md-4">.col-md-4</div>
+            </div>
+        </div>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+        <!--script src="js/bootstrap.min.jp"></script -->
+        <script src="https://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+        <script src="https://static.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
+        <script src="test5main.js"></script>
+    </body>
+</html>

@@ -1,0 +1,6 @@
+max_surgeSpd : 1.5
+max_swaySpd : 5
+max_heaveSpd : 5
+max_pitchRate: 1
+max_rollRate : 1
+max_yawRate : 5

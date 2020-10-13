@@ -1,0 +1,2 @@
+bno055_usb_stick:bno055_usb_stick_msgs:can_driver:joy2speed:motion_control:pan_tilt_cnt:pt_msg:servertest:thruster_allocation:vehicle_msgs
+-DCATKIN_DEVEL_PREFIX=/home/ubuntu/catkin_ws/devel -DCMAKE_INSTALL_PREFIX=/home/ubuntu/catkin_ws/install -G Unix Makefiles

@@ -1,0 +1,5 @@
+<launch>
+  <node pkg = "joy2speed" name = "Navigator" type= "joy2spd.py">
+    <rosparam command="load" file="$(find joy2speed)/scripts/joy2speed.yaml"/>
+  </node>
+</launch>

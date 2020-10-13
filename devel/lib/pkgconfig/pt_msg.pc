@@ -1,0 +1,8 @@
+prefix=/home/ubuntu/catkin_ws/devel
+
+Name: pt_msg
+Description: Description of pt_msg
+Version: 0.0.0
+Cflags: -I/home/ubuntu/catkin_ws/devel/include
+Libs: -L/home/ubuntu/catkin_ws/devel/lib 
+Requires: message_runtime std_msgs

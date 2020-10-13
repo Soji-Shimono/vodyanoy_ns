@@ -1,0 +1,8 @@
+prefix=/home/ubuntu/catkin_ws/devel
+
+Name: bno055_usb_stick
+Description: Description of bno055_usb_stick
+Version: 0.0.0
+Cflags: -I/home/ubuntu/catkin_ws/src/bno055_usb_stick/include
+Libs: -L/home/ubuntu/catkin_ws/devel/lib /usr/lib/arm-linux-gnueabihf/libboost_system.so
+Requires: bno055_usb_stick_msgs geometry_msgs roscpp sensor_msgs tf

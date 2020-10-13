@@ -1,0 +1,6 @@
+<launch>
+  <node pkg = "motion_control" name = "Motion_Control" type= "motion_control.py">
+    <!--param name="spd2frc_surge" value="30"/-->
+    <rosparam command="load" file="$(find motion_control)/scripts/motion_control.yaml"/>
+  </node>
+</launch>
