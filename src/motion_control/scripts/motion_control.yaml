@@ -1,6 +1,6 @@
-spd2frc_surge : 13
-spd2frc_sway : 13
-spd2frc_heave : 13
+spd2frc_surge : 4.75 #1/2*Cd*q*A [kg/m]=0.5*1*1000*(0.11/2)^2*pi 
+spd2frc_sway : 49.5
+spd2frc_heave : 49.5
 spd2frc_pitch : 1
-spd2frc_roll : 1
+spd2frc_roll : 1 
 spd2frc_yaw : 1

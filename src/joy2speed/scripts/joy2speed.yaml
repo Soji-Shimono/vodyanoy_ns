@@ -1,6 +1,6 @@
-max_surgeSpd : 1.5
-max_swaySpd : 5
-max_heaveSpd : 5
-max_pitchRate: 1
-max_rollRate : 1
-max_yawRate : 5
+max_surgeSpd : 1.5 #[m/s]
+max_swaySpd : 1 #[m/s]
+max_heaveSpd : 1 #[m/s]
+max_pitchRate: 1.57 #[rad/s]
+max_rollRate : 1.57 #[rad/s]
+max_yawRate : 1.57 #[rad/s]

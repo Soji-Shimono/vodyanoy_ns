@@ -105,6 +105,12 @@ def navigation(joymsg,imumsg):
             modepub.publish(modemsg)
             print(navigation_mode)
         lastbutton = mode_bottun
+
+        twmsg.linear.x = joymsg.axes[JOY_AXIS_SURGE] * max_surgeSpd
+        twmsg.linear.y = joymsg.axes[JOY_AXIS_SWAY] * max_swaySpd
+        twmsg.linear.z = joymsg.axes[JOY_AXIS_HEAVE] * max_heaveSpd
+        twmsg.angular.z = joymsg.axes[JOY_AXIS_YAW] * max_yawRate * -1
+        '''
         if navigation_mode == 0:
             #0: direct mode
             twmsg.linear.x = joymsg.axes[JOY_AXIS_SURGE] * max_surgeSpd
@@ -123,7 +129,7 @@ def navigation(joymsg,imumsg):
             twmsg.linear.y = joymsg.axes[2] #sway
             twmsg.linear.z = joymsg.axes[3] #heave
             twmsg.angular.y = joymsg.axes[0] #yaw
-        
+        '''
         twpub.publish(twmsg)
     except :
         print("message read error")
