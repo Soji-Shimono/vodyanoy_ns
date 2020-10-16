@@ -97,11 +97,11 @@ def navigation(joymsg,imumsg):
             if navigation_mode == 0:
                 modemsg.data = "Direct"
             if navigation_mode == 1:
-                modemsg.data = "Rate_Control"
+                modemsg.data = "Stabilize"
             if navigation_mode == 2:
-                modemsg.data = "Heading_Hold"
+                modemsg.data = "DepthHold"
             if navigation_mode == 3:
-                modemsg.data = "Depth_Hold"
+                modemsg.data = "MultiAttitude"
             modepub.publish(modemsg)
             print(navigation_mode)
         lastbutton = mode_bottun
@@ -110,26 +110,7 @@ def navigation(joymsg,imumsg):
         twmsg.linear.y = joymsg.axes[JOY_AXIS_SWAY] * max_swaySpd
         twmsg.linear.z = joymsg.axes[JOY_AXIS_HEAVE] * max_heaveSpd
         twmsg.angular.z = joymsg.axes[JOY_AXIS_YAW] * max_yawRate * -1
-        '''
-        if navigation_mode == 0:
-            #0: direct mode
-            twmsg.linear.x = joymsg.axes[JOY_AXIS_SURGE] * max_surgeSpd
-            twmsg.linear.y = joymsg.axes[JOY_AXIS_SWAY] * max_swaySpd
-            twmsg.linear.z = joymsg.axes[JOY_AXIS_HEAVE] * max_heaveSpd
-            twmsg.angular.z = joymsg.axes[JOY_AXIS_YAW] * max_yawRate * -1
-        if navigation_mode == 1:
-            #0: direct mode
-            twmsg.linear.x = joymsg.axes[1] #surge
-            twmsg.linear.y = joymsg.axes[2] #sway
-            twmsg.linear.z = joymsg.axes[3] #heave
-            twmsg.angular.y = joymsg.axes[0] #yaw
-        if navigation_mode == 2:
-            #0: direct mode
-            twmsg.linear.x = joymsg.axes[1] #surge
-            twmsg.linear.y = joymsg.axes[2] #sway
-            twmsg.linear.z = joymsg.axes[3] #heave
-            twmsg.angular.y = joymsg.axes[0] #yaw
-        '''
+        
         twpub.publish(twmsg)
     except :
         print("message read error")
