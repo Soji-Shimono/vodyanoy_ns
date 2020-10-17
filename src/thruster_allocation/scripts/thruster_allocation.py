@@ -9,7 +9,7 @@ import math
 import json
 import collections as cl
 twFrc = Twist()
-rpmORpwm = "rwm"
+rpmORpwm = "rate"
 
 thParam = np.array([1,2,3,4,5,6,7]).reshape(1,7)
 def getparam():

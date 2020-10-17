@@ -180,7 +180,7 @@ def main():
 
 
         else:
-            print("Rate control mode executing.")
+            print("Undefined control mode executing.")
         r.sleep()
         FrcPub.publish(twFrc)
 
