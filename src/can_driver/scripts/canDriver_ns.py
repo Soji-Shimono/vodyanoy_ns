@@ -64,10 +64,10 @@ def callback(message):
     #print(msg)
     #bus.send(msg)
     msg = can.Message(arbitration_id=0x74, dlc=8, data=[b1[0], b1[1], b2[0], b2[1], b3[0], b3[1], b4[0], b4[1]],extended_id=False)
-    bus.send(msg)
+    #bus.send(msg)
     print(msg)
     msg = can.Message(arbitration_id=0x75, dlc=4, data=[b5[0], b5[1], b6[0], b6[1]], extended_id=False)
-    bus.send(msg)
+    #bus.send(msg)
     print(msg)
     #print("Data_Received")
     #print("test")
@@ -138,6 +138,7 @@ def main():
     while 1:
         #print("rate")
         msg = bus.recv(0.5)
+        '''
         if msg.arbitration_id ==20:
             depthmsg.z = ((calctemp(msg,dT)/10.0) *100.0 -101325) / (1023 * 9.81)
             pub_depth.publish(depthmsg)
@@ -148,6 +149,7 @@ def main():
             battmsg.voltage = battInfo_update(msg)[0]
             battmsg.current = battInfo_update(msg)[1]
             pub_batt.publish(battmsg)
+        '''
         #r.sleep()        
 
 if __name__ == '__main__':
