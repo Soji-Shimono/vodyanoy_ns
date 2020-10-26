@@ -13,61 +13,70 @@ bus = can.interface.Bus(channel='can0',bustype='socketcan',bitrate=1000000)
 battmsg = BatteryState()
 tempmsg = Temperature()
 depthmsg = Point()
+thcom = ThrustersCommand()
+pub_th = rospy.Publisher('Raw_ThrusterCommand',ThrustersCommand,queue_size=10)
 # max rpm
 # Thruster com: int16
 # 1 count = 0.2 rpm
 # 32768 * 0.2 = 6553.6
 dT = 0
 DEADBAND = 1
-MAX_COMMAND = 10000
+MAX_COMMAND = 7000
+MAX_COMMAND_1 = 6000
 
 def callback(message):
+    global thcom
     mode = 0
     if message.mode == "rpm":
-        for i in range():
-            _b2 = rpm2com(message.Thruster1.rpm,MAX_COMMAND,DEADBAND)
-            _b3 = rpm2com(message.Thruster2.rpm,MAX_COMMAND,DEADBAND)
-            _b6 = rpm2com(message.Thruster3.rpm,MAX_COMMAND,DEADBAND)
-            _b5 = rpm2com(message.Thruster4.rpm,MAX_COMMAND,DEADBAND)
-            _b4 = rpm2com(message.Thruster5.rpm,MAX_COMMAND,DEADBAND)
-            _b1 = rpm2com(message.Thruster6.rpm,MAX_COMMAND,DEADBAND)
-
-            print("mode1")
-            mode = 1
+        _b2 = rpm2com(message.Thruster1.rpm,MAX_COMMAND,DEADBAND)
+        _b3 = rpm2com(message.Thruster2.rpm,MAX_COMMAND,DEADBAND)
+        _b6 = rpm2com(message.Thruster3.rpm,MAX_COMMAND_1,DEADBAND)
+        _b5 = rpm2com(message.Thruster4.rpm,MAX_COMMAND,DEADBAND)
+        _b4 = rpm2com(message.Thruster5.rpm,MAX_COMMAND,DEADBAND)
+        _b1 = rpm2com(message.Thruster6.rpm,MAX_COMMAND,DEADBAND)
+        print("mode1")
+        mode = 1
     if message.mode == "rate":
-            _b2 = rate2com(message.Thruster1.parsentage * -1.0,MAX_COMMAND,DEADBAND)
-            _b3 = rate2com(message.Thruster2.parsentage * -1.0,MAX_COMMAND,DEADBAND)
-            _b6 = rate2com(message.Thruster3.parsentage * -1.0,MAX_COMMAND,DEADBAND)
-            _b5 = rate2com(message.Thruster4.parsentage,MAX_COMMAND,DEADBAND)
-            _b4 = rate2com(message.Thruster5.parsentage,MAX_COMMAND,DEADBAND)
-            _b1 = rate2com(message.Thruster6.parsentage,MAX_COMMAND,DEADBAND)
+        _b2 = rate2com(message.Thruster1.parsentage * -1.0,MAX_COMMAND,DEADBAND)
+        _b3 = rate2com(message.Thruster2.parsentage * -1.0,MAX_COMMAND,DEADBAND)
+        _b6 = rate2com(message.Thruster3.parsentage * -1.0,MAX_COMMAND_1,DEADBAND)
+        _b5 = rate2com(message.Thruster4.parsentage,MAX_COMMAND,DEADBAND)
+        _b4 = rate2com(message.Thruster5.parsentage,MAX_COMMAND,DEADBAND)
+        _b1 = rate2com(message.Thruster6.parsentage,MAX_COMMAND,DEADBAND)
 
-            mode = 2
-            print("mode2")
+        mode = 2
+        print("mode2")
     else:
-            _b1 = int(message.Thruster1.rpm * 5)
-            _b2 = int(message.Thruster2.rpm * 5)
-            _b3 = int(message.Thruster3.rpm * 5)
-            _b4 = int(message.Thruster4.rpm * 5)
-            _b5 = int(message.Thruster5.rpm * 5)
-            _b6 = int(message.Thruster6.rpm * 5)
-            print("mode_")
-    
+        _b1 = int(message.Thruster1.rpm * 5)
+        _b2 = int(message.Thruster2.rpm * 5)
+        _b3 = int(message.Thruster3.rpm * 5)
+        _b4 = int(message.Thruster4.rpm * 5)
+        _b5 = int(message.Thruster5.rpm * 5)
+        _b6 = int(message.Thruster6.rpm * 5)
+        print("mode_")
+
     b1 = struct.pack('>h',_b1)
     b2 = struct.pack('>h',_b2)
     b3 = struct.pack('>h',_b3)
     b4 = struct.pack('>h',_b4)
     b5 = struct.pack('>h',_b5)
     b6 = struct.pack('>h',_b6)
+    thcom.Thruster1.parsentage = _b1
+    thcom.Thruster2.parsentage = _b2
+    thcom.Thruster3.parsentage = _b3
+    thcom.Thruster4.parsentage = _b4
+    thcom.Thruster5.parsentage = _b5
+    thcom.Thruster6.parsentage = _b6
+    pub_th.publish(thcom)
 
     msg = can.Message(arbitration_id=0x73, dlc=1, data=[mode],extended_id=False)
     #print(msg)
-    #bus.send(msg)
+    bus.send(msg)
     msg = can.Message(arbitration_id=0x74, dlc=8, data=[b1[0], b1[1], b2[0], b2[1], b3[0], b3[1], b4[0], b4[1]],extended_id=False)
-    #bus.send(msg)
+    bus.send(msg)
     print(msg)
     msg = can.Message(arbitration_id=0x75, dlc=4, data=[b5[0], b5[1], b6[0], b6[1]], extended_id=False)
-    #bus.send(msg)
+    bus.send(msg)
     print(msg)
     #print("Data_Received")
     #print("test")
@@ -138,7 +147,7 @@ def main():
     while 1:
         #print("rate")
         msg = bus.recv(0.5)
-        '''
+        
         if msg.arbitration_id ==20:
             depthmsg.z = ((calctemp(msg,dT)/10.0) *100.0 -101325) / (1023 * 9.81)
             pub_depth.publish(depthmsg)
@@ -149,7 +158,7 @@ def main():
             battmsg.voltage = battInfo_update(msg)[0]
             battmsg.current = battInfo_update(msg)[1]
             pub_batt.publish(battmsg)
-        '''
+    
         #r.sleep()        
 
 if __name__ == '__main__':

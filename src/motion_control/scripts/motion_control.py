@@ -6,6 +6,7 @@ from geometry_msgs.msg import Twist
 import math
 from geometry_msgs.msg import Point
 from geometry_msgs.msg import Vector3
+import numpy as np
 import tf
 
 
@@ -15,6 +16,12 @@ imu = Imu()
 eular = Vector3()
 eular2 = Vector3()
 pitch, roll, yaw = 0,0,0
+vacc = Vector3()
+vangv = Vector3()
+vang = Vector3()
+rm = tf.transformations.euler_matrix(math.pi,0,-math.pi/2,'sxyz')
+posrm = tf.transformations.quaternion_from_euler(math.pi,0,-math.pi/2,'sxyz')
+
 #param
 spd2frc_surge, spd2frc_sway, spd2frc_heave = 0,0,0 #[kg/m]
 spd2frc_pitch, spd2frc_roll, spd2frc_yaw = 0,0,0 #[Nm/s]
@@ -31,12 +38,12 @@ def getparam():
     global ROLL_P, ROLL_I, ROLL_D, ROLL_FF
     global PITCH_P, PITCH_I, PITCH_D, PITCH_FF
 
-    spd2frc_surge = rospy.get_param("~spd2frc_surge",1)
-    spd2frc_sway = rospy.get_param("~spd2frc_sway",1)
-    spd2frc_heave = rospy.get_param("~spd2frc_heave",1)
-    spd2frc_pitch = rospy.get_param("~spd2frc_pitch",1)
-    spd2frc_roll = rospy.get_param("~spd2frc_roll",1)
-    spd2frc_yaw = rospy.get_param("~spd2frc_yaw",1)
+    spd2frc_surge = rospy.get_param("~spd2frc_surge",4.75)
+    spd2frc_sway = rospy.get_param("~spd2frc_sway",49.5)
+    spd2frc_heave = rospy.get_param("~spd2frc_heave",49.5)
+    spd2frc_pitch = rospy.get_param("~spd2frc_pitch",5)
+    spd2frc_roll = rospy.get_param("~spd2frc_roll",5)
+    spd2frc_yaw = rospy.get_param("~spd2frc_yaw",5)
     YAW_P  = rospy.get_param("~YAW_P",1)
     YAW_I  = rospy.get_param("~YAW_I",1)
     YAW_D  = rospy.get_param("~YAW_D",1)
@@ -66,62 +73,68 @@ def mode_callback(message):
         mode = 2
     if message.data == "MultiAttitude":
         mode = 3
+
     print(mode)
 def spd_callback(message):
     global twSpd
     twSpd = message
 def imu_callback(message):
     global imu
-    global pitch, roll, yaw
-    global eular
-    global eular2
+    global vacc
+    global vang
+    global vangv
     imu = message
-    roll, pitch, yaw = quatanion2eular(imu)
-    eular.x = roll *180 / math.pi
-    eular.y = pitch *180 / math.pi
-    eular.z = yaw *180 / math.pi
-    e = tf.transformations.euler_from_quaternion((imu.orientation.x, imu.orientation.y, imu.orientation.z, imu.orientation.w))
-    eular2.x = e[0] *180 / math.pi
-    eular2.y = e[1] *180 / math.pi
-    eular2.z = e[2] *180 / math.pi
+    vang = quatanion2eular(imu.orientation)
+    _acc = np.dot(rm,[imu.linear_acceleration.x,imu.linear_acceleration.y,imu.linear_acceleration.z,1])
+    vacc.x = _acc[0]
+    vacc.y = _acc[1]
+    vacc.z = _acc[2]
+    _angv = np.dot(rm,[imu.angular_velocity.x,imu.angular_velocity.y,imu.angular_velocity.z,1])
+    vangv.x = _angv[0]
+    vangv.y = _angv[1]
+    vangv.z = _angv[2]
 
 def point_callback(message):
     global depth
     depth = message.z
-def quatanion2eular(imu):
-    q0 = imu.orientation.x
-    q1 = imu.orientation.y
-    q2 = imu.orientation.z
-    q3 = imu.orientation.w
-    roll = math.atan(2 * (q0 * q1 + q2 * q3 ) / (math.pow(q0,2) - math.pow(q1,2) - math.pow(q2,2) + math.pow(q3,2)))
-    pitch = math.asin( 2 * (q0 * q2 - q1 * q3))
-    yaw = math.atan(2 * (q0 * q3 + q1 * q2 ) / (math.pow(q0,2) + math.pow(q1,2) - math.pow(q2,2) - math.pow(q3,2)))
-    return roll, pitch, yaw
+
+def quatanion2eular(orientation):
+    a = Vector3()
+    q = tf.transformations.quaternion_multiply([orientation.x, orientation.y, orientation.z, orientation.w],posrm)
+    e2 = tf.transformations.euler_from_quaternion((q[0], q[1], q[2], q[3]))
+    if e2[0] > 0:
+        a.x = e2[0] - math.pi
+    else:
+        a.x = e2[0] + math.pi
+    a.y = e2[1] * -1
+    a.z = e2[2] * -1
+    return a
+    
 class controler:
-    targetPos = 0
-    kp = 1
-    kd = 0
-    ki = 0
-    acum = 0
-    _e = 0
-    k_ff = 1
+
+    def __init__(self,kp,ki,kd,k_ff):
+        self.kp = kp
+        self.kd = kd
+        self.ki = ki
+        self.k_ff = k_ff
+        self.acum = 0
+        self._e = 0
+        self.targetPos = 0
 
     def updatePID(self, target, current, dt):
         e = target - current
-        acum  = acum + (e * dt)
-        u = kp * e + kd * ((e - _e) / dt) + acum * ki
-        _e = e
+        self.acum  = self.acum + (e * dt)
+        u = self.kp * e + self.kd * ((e - self._e) / dt) + self.acum * self.ki
+        self._e = e
         return u
 
     def ff(self, target, current):
-        return ( target - current ) * k_ff
+        return ( target - current ) * self.k_ff
 
-    def init(self,p,d,i,ff):
-        kp = p
-        kd = d
-        ki = i
-        acum = 0
-        k_ff = ff
+    def reset(self):
+        self.acum = 0
+        self._e = 0
+
 class stateEstimater:
     def __init__(self,value):
         self.last_depth = value
@@ -132,7 +145,7 @@ class stateEstimater:
     def update(self,depth,dt):
         if self.last_depth == 0:
             self.last_depth = depth
-        velosity_heave = (depth - self.last_depth) / dt
+        self.velosity_heave = (depth - self.last_depth) / dt
         self.last_depth = depth
 
 def main():
@@ -142,64 +155,68 @@ def main():
     posSub = rospy.Subscriber('Depth', Point,point_callback)
     imuSub = rospy.Subscriber('imu', Imu,imu_callback)
     FrcPub = rospy.Publisher('twistFrc',Twist,queue_size=10)
-    eularPub = rospy.Publisher('eularAngle',Vector3,queue_size=10)
-    eularPub2 = rospy.Publisher('eularAngle2',Vector3,queue_size=10)
+    eularPub = rospy.Publisher('vehicleAttitude',Vector3,queue_size=10)
+    eularPub2 = rospy.Publisher('vehicleAngularVelosity',Vector3,queue_size=10)
+    eularPub3 = rospy.Publisher('vehicleAcc',Vector3,queue_size=10)
     getparam()
     r = rospy.Rate(node_cycle)
 
-    yawCon = controler()
-    rollCon = controler()
-    pitchCon = controler()
-    depthCon = controler()
-    yawCon.init(YAW_P,YAW_I,YAW_D,YAW_FF)
-    rollCon.init(ROLL_P,ROLL_I,ROLL_D,ROLL_FF)
-    pitchCon.init(PITCH_P,PITCH_I,PITCH_D,PITCH_FF)
-    depthCon.init(DEPTH_P,DEPTH_I,DEPTH_D,DEPTH_FF)
+    yawCon = controler(YAW_P,YAW_I,YAW_D,YAW_FF)
+    rollCon = controler(ROLL_P,ROLL_I,ROLL_D,ROLL_FF)
+    pitchCon = controler(PITCH_P,PITCH_I,PITCH_D,PITCH_FF)
+    depthCon = controler(DEPTH_P,DEPTH_I,DEPTH_D,DEPTH_FF)
     
     vehicleState = stateEstimater(0)
-
+    mode_catch = False
     while not rospy.is_shutdown():
         #
         twFrc = Twist()
         vehicleState.update(depth,1 / node_cycle)
 
         if mode == 0:
-            #print("Dict mode executing.")
+            print("Dict mode executing.")
+            mode_catch = True
             twFrc.linear.x = twSpd.linear.x * abs(twSpd.linear.x) * spd2frc_surge
             twFrc.linear.y = twSpd.linear.y * abs(twSpd.linear.y) * spd2frc_sway
             twFrc.linear.z = twSpd.linear.z * abs(twSpd.linear.z) * spd2frc_heave
             twFrc.angular.z = twSpd.angular.z * spd2frc_yaw
         if mode == 1:
-            #print("Stability mode executing.")
-            twFrc.linear.x = twSpd.linear.x * math.abs(twSpd.linear.x) * spd2frc_surge
-            twFrc.linear.y = twSpd.linear.y * math.abs(twSpd.linear.y) * spd2frc_sway
-            twFrc.linear.z = twSpd.linear.z * math.abs(twSpd.linear.z) * spd2frc_heave
+            mode_catch = True
+            print("Stability mode executing.")
+            twFrc.linear.x = twSpd.linear.x * abs(twSpd.linear.x) * spd2frc_surge
+            twFrc.linear.y = twSpd.linear.y * abs(twSpd.linear.y) * spd2frc_sway
+            twFrc.linear.z = twSpd.linear.z * abs(twSpd.linear.z) * spd2frc_heave
             
             yawCon.targetPos = yawCon.targetPos + twSpd.angular.z * (1 / node_cycle)
                 
-            twFrc.angular.x = rollCon.updatePID(rollCon.ff(0,roll),imu.angular_velocity[0],(1 / node_cycle))
-            twFrc.angular.y = pitchCon.updatePID(pitchCon.ff(0,pitch),imu.angular_velocity[1],(1 / node_cycle))
-            twFrc.angular.z = yawCon.updatePID(yawCon.ff(yawCon.targetPos,yaw),imu.angular_velocity[2],(1 / node_cycle))
+            twFrc.angular.x = rollCon.updatePID(rollCon.ff(0,vang.x),vangv.x,(1 / node_cycle))
+            twFrc.angular.y = pitchCon.updatePID(pitchCon.ff(0,vang.y),vangv.y,(1 / node_cycle))
+            twFrc.angular.z = yawCon.updatePID(yawCon.ff(yawCon.targetPos,vang.z),vangv.z,(1 / node_cycle))
         if mode == 2:
-            #print("DepthHold mode executing.")
-            twFrc.linear.x = twSpd.linear.x * math.abs(twSpd.linear.x) * spd2frc_surge
-            twFrc.linear.y = twSpd.linear.y * math.abs(twSpd.linear.y) * spd2frc_sway
+            mode_catch = True
+            print("DepthHold mode executing.")
+            twFrc.linear.x = twSpd.linear.x * abs(twSpd.linear.x) * spd2frc_surge
+            twFrc.linear.y = twSpd.linear.y * abs(twSpd.linear.y) * spd2frc_sway
 
             yawCon.targetPos = yawCon.targetPos + twSpd.angular.z * (1 / node_cycle)
             depthCon.targetPos = depthCon.targetPos + twSpd.linear.z * (1 / node_cycle)
 
             twFrc.linear.z = yawCon.updatePID(depthCon.ff(depthCon.targetPos,depth),vehicleState.velosity_heave,(1 / node_cycle))
-            twFrc.angular.x = rollCon.updatePID(rollCon.ff(0,roll),imu.angular_velocity[0],(1 / node_cycle))
-            twFrc.angular.y = pitchCon.updatePID(pitchCon.ff(0,pitch),imu.angular_velocity[1],(1 / node_cycle))
-            twFrc.angular.z = yawCon.updatePID(yawCon.ff(yawCon.targetPos,yaw),imu.angular_velocity[2],(1 / node_cycle))
+            twFrc.angular.x = rollCon.updatePID(rollCon.ff(0,vang.x),vangv.x, (1 / node_cycle))
+            twFrc.angular.y = pitchCon.updatePID(pitchCon.ff(0,vang.y),vangv.y,(1 / node_cycle))
+            twFrc.angular.z = yawCon.updatePID(yawCon.ff(yawCon.targetPos,vang.z),vangv.z, (1 / node_cycle))
         if mode == 3:
+            mode_catch = True
             print("MultiAttitude mode executing.")
-        else:
-            print("Undefined control mode executing.")
+        if mode_catch == False:
+            print("Undefined control mode executing. Mode:=" + str(mode))
         r.sleep()
         FrcPub.publish(twFrc)
-        eularPub.publish(eular)
-        eularPub2.publish(eular2)
+
+        print(twFrc)
+        eularPub.publish(vang)
+        eularPub2.publish(vangv)
+        eularPub3.publish(vacc)
 
    
 

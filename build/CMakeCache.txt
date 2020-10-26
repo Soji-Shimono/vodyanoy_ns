@@ -502,6 +502,12 @@ tf2_ros_DIR:PATH=/opt/ros/melodic/share/tf2_ros/cmake
 tf_DIR:PATH=/opt/ros/melodic/share/tf/cmake
 
 //Value Computed by CMake
+tf_test_BINARY_DIR:STATIC=/home/ubuntu/catkin_ws/build/tf_test
+
+//Value Computed by CMake
+tf_test_SOURCE_DIR:STATIC=/home/ubuntu/catkin_ws/src/tf_test
+
+//Value Computed by CMake
 thruster_allocation_BINARY_DIR:STATIC=/home/ubuntu/catkin_ws/build/thruster_allocation
 
 //Value Computed by CMake
@@ -644,7 +650,7 @@ CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_NM
 CMAKE_NM-ADVANCED:INTERNAL=1
 //number of local generators
-CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=14
+CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=15
 //ADVANCED property for variable: CMAKE_OBJCOPY
 CMAKE_OBJCOPY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_OBJDUMP

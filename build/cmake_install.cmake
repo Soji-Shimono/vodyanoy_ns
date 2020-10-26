@@ -139,6 +139,7 @@ if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   include("/home/ubuntu/catkin_ws/build/joy2speed/cmake_install.cmake")
   include("/home/ubuntu/catkin_ws/build/motion_control/cmake_install.cmake")
   include("/home/ubuntu/catkin_ws/build/bno055_usb_stick/cmake_install.cmake")
+  include("/home/ubuntu/catkin_ws/build/tf_test/cmake_install.cmake")
   include("/home/ubuntu/catkin_ws/build/vehicle_msgs/cmake_install.cmake")
   include("/home/ubuntu/catkin_ws/build/thruster_allocation/cmake_install.cmake")
 
