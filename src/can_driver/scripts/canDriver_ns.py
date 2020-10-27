@@ -15,20 +15,44 @@ tempmsg = Temperature()
 depthmsg = Point()
 thcom = ThrustersCommand()
 pub_th = rospy.Publisher('Raw_ThrusterCommand',ThrustersCommand,queue_size=10)
+
 # max rpm
 # Thruster com: int16
 # 1 count = 0.2 rpm
 # 32768 * 0.2 = 6553.6
 dT = 0
 DEADBAND = 1
-MAX_COMMAND = 7000
-MAX_COMMAND_1 = 6000
+MAX_COMMAND_150W = 7000
+MAX_COMMAND_300W = 6000
 last_b1,last_b2,last_b3,last_b4,last_b5,last_b6 = 0,0,0,0,0,0
+
+th1 = thrusthandler(DEADBAND, 1, MAX_COMMAND_150W)
+th2 = thrusthandler(DEADBAND, -1, MAX_COMMAND_150W)
+th3 = thrusthandler(DEADBAND, -1, MAX_COMMAND_150W)
+th4 = thrusthandler(DEADBAND, 1, MAX_COMMAND_150W)
+th5 = thrusthandler(DEADBAND, 1, MAX_COMMAND_150W)
+th6 = thrusthandler(DEADBAND, -1, MAX_COMMAND_300W)
 
 def callback(message):
     global thcom
     global last_b1,last_b2,last_b3,last_b4,last_b5,last_b6
+    global th1,th2,th3,th4,th5,th6
+    
     mode = 0
+    th1.update(message.Thruster6.rpm,message.mode)
+    th2.update(message.Thruster1.rpm,message.mode)
+    th3.update(message.Thruster2.rpm,message.mode)
+    th4.update(message.Thruster5.rpm,message.mode)
+    th5.update(message.Thruster4.rpm,message.mode)
+    th6.update(message.Thruster3.rpm,message.mode)
+
+    b1 = struct.pack('>h',th1.command)
+    b2 = struct.pack('>h',th2.command)
+    b3 = struct.pack('>h',th3.command)
+    b4 = struct.pack('>h',th4.command)
+    b5 = struct.pack('>h',th5.command)
+    b6 = struct.pack('>h',th6.command)
+
     if message.mode == "rpm":
         _b2 = rpm2com(message.Thruster1.rpm,MAX_COMMAND,DEADBAND)
         _b3 = rpm2com(message.Thruster2.rpm,MAX_COMMAND,DEADBAND)
@@ -118,11 +142,11 @@ class thrusthandler:
     
     def update(self,command,mode):
         if mode == "rate":
-            self.command = int(command / 100 * self.commandLimit)
+            self.command = int((command * self.dir) / 100 * self.commandLimit)
             if abs(self.command) < self.deadBand:
                 self.command = 0
         if mode == "rpm":
-            self.command = int(command * 5)
+            self.command = int((command * self.dir) * 5)
             if abs(self.command) < self.deadBand:
                 self.command = 0
             if abs(self.command) > self.commandLimit:
@@ -133,21 +157,7 @@ class thrusthandler:
         if(self.last_command * self.command < 0):
             self.command = 0
         self.last_command = self.command
-    '''
-    def rate2com(rate,LIMIT,band):
-    t = int(rate / 100 * LIMIT)
-    if abs(t) < band:
-        t = 0
-    return t
 
-    def rpm2com(rpm,LIMIT,band):
-    t = int(rpm * 5)
-    if abs(t) < band:
-        t = 0
-    if abs(t) > LIMIT:
-        t = LIMIT * t / abs(t)
-    return int(t)
-    '''
 def rate2com(rate,LIMIT,band):
     t = int(rate / 100 * LIMIT)
     if abs(t) < band:
