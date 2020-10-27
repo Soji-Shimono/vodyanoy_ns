@@ -23,9 +23,11 @@ dT = 0
 DEADBAND = 1
 MAX_COMMAND = 7000
 MAX_COMMAND_1 = 6000
+last_b1,last_b2,last_b3,last_b4,last_b5,last_b6 = 0,0,0,0,0,0
 
 def callback(message):
     global thcom
+    global last_b1,last_b2,last_b3,last_b4,last_b5,last_b6
     mode = 0
     if message.mode == "rpm":
         _b2 = rpm2com(message.Thruster1.rpm,MAX_COMMAND,DEADBAND)
@@ -55,12 +57,33 @@ def callback(message):
         _b6 = int(message.Thruster6.rpm * 5)
         print("mode_")
 
+    if(last_b1 * _b1 < 0):
+        _b1 = 0
+    if(last_b2 * _b2 < 0):
+        _b2 = 0
+    if(last_b3 * _b3 < 0):
+        _b1 = 0
+    if(last_b4 * _b4 < 0):
+        _b4 = 0
+    if(last_b5 * _b5 < 0):
+        _b5 = 0
+    if(last_b6 * _b6 < 0):
+        _b6 = 0
+
+    last_b1 = _b1
+    last_b2 = _b2
+    last_b3 = _b3
+    last_b4 = _b4
+    last_b5 = _b5
+    last_b6 = _b6
+
     b1 = struct.pack('>h',_b1)
     b2 = struct.pack('>h',_b2)
     b3 = struct.pack('>h',_b3)
     b4 = struct.pack('>h',_b4)
     b5 = struct.pack('>h',_b5)
     b6 = struct.pack('>h',_b6)
+    
     thcom.Thruster1.parsentage = _b1
     thcom.Thruster2.parsentage = _b2
     thcom.Thruster3.parsentage = _b3
@@ -84,6 +107,47 @@ def callback(message):
 	# is_error_frame=False, channel=None, dlc=None, data=None, is_fd=False, bitrate_switch=False, 
 	# error_state_indicator=False, extended_id=True, check=False)
 
+class thrusthandler:
+
+    def __init__(self,deadband,dir,limit):
+        self.deadBand = deadband
+        self.direction = dir
+        self.commandLimit = limit
+        self.last_command = 0
+        self.command = 0
+    
+    def update(self,command,mode):
+        if mode == "rate":
+            self.command = int(command / 100 * self.commandLimit)
+            if abs(self.command) < self.deadBand:
+                self.command = 0
+        if mode == "rpm":
+            self.command = int(command * 5)
+            if abs(self.command) < self.deadBand:
+                self.command = 0
+            if abs(self.command) > self.commandLimit:
+                self.command = self.commandLimit * self.command / abs(self.command)
+        else:
+            self.command = 0
+
+        if(self.last_command * self.command < 0):
+            self.command = 0
+        self.last_command = self.command
+    '''
+    def rate2com(rate,LIMIT,band):
+    t = int(rate / 100 * LIMIT)
+    if abs(t) < band:
+        t = 0
+    return t
+
+    def rpm2com(rpm,LIMIT,band):
+    t = int(rpm * 5)
+    if abs(t) < band:
+        t = 0
+    if abs(t) > LIMIT:
+        t = LIMIT * t / abs(t)
+    return int(t)
+    '''
 def rate2com(rate,LIMIT,band):
     t = int(rate / 100 * LIMIT)
     if abs(t) < band:
