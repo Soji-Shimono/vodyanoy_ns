@@ -9,6 +9,33 @@ from sensor_msgs.msg import BatteryState
 from sensor_msgs.msg import Temperature
 from geometry_msgs.msg import Point
 
+class thrusthandler:
+
+    def __init__(self,deadband,dir,limit):
+        self.deadBand = deadband
+        self.direction = dir
+        self.commandLimit = limit
+        self.last_command = 0
+        self.command = 0
+    
+    def update(self,command,mode):
+        if mode == "rate":
+            self.command = int((command * self.direction) / 100 * self.commandLimit)
+            if abs(self.command) < self.deadBand:
+                self.command = 0
+        if mode == "rpm":
+            self.command = int((command * self.direction) * 5)
+            if abs(self.command) < self.deadBand:
+                self.command = 0
+            if abs(self.command) > self.commandLimit:
+                self.command = self.commandLimit * self.command / abs(self.command)
+        else:
+            self.command = 0
+
+        if(self.last_command * self.command < 0):
+            self.command = 0
+        self.last_command = self.command
+
 bus = can.interface.Bus(channel='can0',bustype='socketcan',bitrate=1000000)
 battmsg = BatteryState()
 tempmsg = Temperature()
@@ -22,7 +49,7 @@ pub_th = rospy.Publisher('Raw_ThrusterCommand',ThrustersCommand,queue_size=10)
 # 32768 * 0.2 = 6553.6
 dT = 0
 DEADBAND = 1
-MAX_COMMAND_150W = 7000
+MAX_COMMAND_150W = 10000
 MAX_COMMAND_300W = 6000
 last_b1,last_b2,last_b3,last_b4,last_b5,last_b6 = 0,0,0,0,0,0
 
@@ -37,7 +64,7 @@ def callback(message):
     global thcom
     global last_b1,last_b2,last_b3,last_b4,last_b5,last_b6
     global th1,th2,th3,th4,th5,th6
-    
+
     mode = 0
     th1.update(message.Thruster6.rpm,message.mode)
     th2.update(message.Thruster1.rpm,message.mode)
@@ -54,21 +81,21 @@ def callback(message):
     b6 = struct.pack('>h',th6.command)
 
     if message.mode == "rpm":
-        _b2 = rpm2com(message.Thruster1.rpm,MAX_COMMAND,DEADBAND)
-        _b3 = rpm2com(message.Thruster2.rpm,MAX_COMMAND,DEADBAND)
-        _b6 = rpm2com(message.Thruster3.rpm,MAX_COMMAND_1,DEADBAND)
-        _b5 = rpm2com(message.Thruster4.rpm,MAX_COMMAND,DEADBAND)
-        _b4 = rpm2com(message.Thruster5.rpm,MAX_COMMAND,DEADBAND)
-        _b1 = rpm2com(message.Thruster6.rpm,MAX_COMMAND,DEADBAND)
+        _b2 = rpm2com(message.Thruster1.rpm,MAX_COMMAND_150W,DEADBAND)
+        _b3 = rpm2com(message.Thruster2.rpm,MAX_COMMAND_150W,DEADBAND)
+        _b6 = rpm2com(message.Thruster3.rpm,MAX_COMMAND_300W,DEADBAND)
+        _b5 = rpm2com(message.Thruster4.rpm,MAX_COMMAND_150W,DEADBAND)
+        _b4 = rpm2com(message.Thruster5.rpm,MAX_COMMAND_150W,DEADBAND)
+        _b1 = rpm2com(message.Thruster6.rpm,MAX_COMMAND_150W,DEADBAND)
         print("mode1")
         mode = 1
     if message.mode == "rate":
-        _b2 = rate2com(message.Thruster1.parsentage * -1.0,MAX_COMMAND,DEADBAND)
-        _b3 = rate2com(message.Thruster2.parsentage * -1.0,MAX_COMMAND,DEADBAND)
-        _b6 = rate2com(message.Thruster3.parsentage * -1.0,MAX_COMMAND_1,DEADBAND)
-        _b5 = rate2com(message.Thruster4.parsentage,MAX_COMMAND,DEADBAND)
-        _b4 = rate2com(message.Thruster5.parsentage,MAX_COMMAND,DEADBAND)
-        _b1 = rate2com(message.Thruster6.parsentage,MAX_COMMAND,DEADBAND)
+        _b2 = rate2com(message.Thruster1.parsentage * -1.0,MAX_COMMAND_150W,DEADBAND)
+        _b3 = rate2com(message.Thruster2.parsentage * -1.0,MAX_COMMAND_150W,DEADBAND)
+        _b6 = rate2com(message.Thruster3.parsentage * -1.0,MAX_COMMAND_300W,DEADBAND)
+        _b5 = rate2com(message.Thruster4.parsentage,MAX_COMMAND_150W,DEADBAND)
+        _b4 = rate2com(message.Thruster5.parsentage,MAX_COMMAND_150W,DEADBAND)
+        _b1 = rate2com(message.Thruster6.parsentage,MAX_COMMAND_150W,DEADBAND)
 
         mode = 2
         print("mode2")
@@ -130,33 +157,6 @@ def callback(message):
 	#can.Message(timestamp=0.0, arbitration_id=0, is_extended_id=None, is_remote_frame=False, 
 	# is_error_frame=False, channel=None, dlc=None, data=None, is_fd=False, bitrate_switch=False, 
 	# error_state_indicator=False, extended_id=True, check=False)
-
-class thrusthandler:
-
-    def __init__(self,deadband,dir,limit):
-        self.deadBand = deadband
-        self.direction = dir
-        self.commandLimit = limit
-        self.last_command = 0
-        self.command = 0
-    
-    def update(self,command,mode):
-        if mode == "rate":
-            self.command = int((command * self.dir) / 100 * self.commandLimit)
-            if abs(self.command) < self.deadBand:
-                self.command = 0
-        if mode == "rpm":
-            self.command = int((command * self.dir) * 5)
-            if abs(self.command) < self.deadBand:
-                self.command = 0
-            if abs(self.command) > self.commandLimit:
-                self.command = self.commandLimit * self.command / abs(self.command)
-        else:
-            self.command = 0
-
-        if(self.last_command * self.command < 0):
-            self.command = 0
-        self.last_command = self.command
 
 def rate2com(rate,LIMIT,band):
     t = int(rate / 100 * LIMIT)
