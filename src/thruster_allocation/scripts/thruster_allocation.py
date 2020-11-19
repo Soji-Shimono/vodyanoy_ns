@@ -8,10 +8,12 @@ import numpy as np
 import math
 import json
 import collections as cl
+
 twFrc = Twist()
 rpmORpwm = "rate"
-
 thParam = np.array([1,2,3,4,5,6,7]).reshape(1,7)
+node_cycle  = 50.0
+
 def getparam():
     global thParam
     num = rospy.get_param("~thnum",6)
@@ -134,7 +136,7 @@ def main():
     cmdPub = rospy.Publisher('thrustcmd',ThrustersCommand,queue_size=10)
     im =  getThrustAllocator("/home/ubuntu/catkin_ws/src/thruster_allocation/scripts/TH_Alloc.json")
     getparam()
-    r = rospy.Rate(20.0)
+    r = rospy.Rate(node_cycle)
     
     while not rospy.is_shutdown():
         thf = thrustallocation(twFrc,im)

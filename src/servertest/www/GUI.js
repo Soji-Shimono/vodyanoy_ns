@@ -16,7 +16,9 @@ function pubmessage(){
     var pads = navigator.getGamepads ? navigator.getGamepads() :
     (navigator.webkitGetGamepads ? navigator.webkitGetGamepads : []);
     pads = pads[0];
+    document.getElementById("padname").innerHTML = "Connecting";
     if(pads) {
+        document.getElementById("padname").innerHTML = "Connecting1";
         var but = [];
         var axes = [];
         console.log(pads.id);
@@ -54,7 +56,43 @@ function pubmessage(){
                             val     = val.value;
                         }
                         if(pressed){
-                            but[i] = 1.0;
+                            but[i] = 1;
+                        }else{
+                            but[i] = 0;
+                        }
+                    }else{
+                        but[i] = 0;
+                    }
+                }
+                if(pads.axes[4] > 0.5){
+                    but[14] = 1;
+                }else if(pads.axes[4] < -0.5){
+                    but[15] = 1;
+                }
+                if(pads.axes[5] > 0.5){
+                    but[12] = 1;
+                }else if(pads.axes[5] < -0.5){
+                    but[13] = 1;
+                }
+
+                //get axes state
+                for (var i = 0; i < 4; i++) {
+                    axes[i] = pads.axes[i];
+                }
+                break;
+            case "GV150 Extended Gamepad":
+                console.log("GV150 connected");
+                document.getElementById("padname").innerHTML = "GV150";
+                for(var i = 0 ; i < 17; i++) {
+                    if(i < 8){
+                        var val = pads.buttons[i];
+                        var pressed = val == 1.0;
+                        if (typeof(val) == "object") {
+                            pressed = val.pressed;
+                            val     = val.value;
+                        }
+                        if(pressed){
+                            but[i] = 1;
                         }else{
                             but[i] = 0;
                         }
@@ -88,6 +126,8 @@ function pubmessage(){
             buttons:but
         });
         vel.publish(v);
+    }else{
+        document.getElementById("padname").innerHTML = pads;
     }
 }
 //setInterval(pubmessage,100);
@@ -110,12 +150,12 @@ var ls = new ROSLIB.Topic({
 
 });
 ls.subscribe(function(message){
-    document.getElementById("Surge").value = message["axes"][0] * 100;
-    document.getElementById("Sway").value = message["axes"][1] * 100;
-    document.getElementById("Heave").value = message["axes"][2] * 100;
-    document.getElementById("Pitch").value = message["axes"][3] * 100;
+    document.getElementById("Surge").value = message["axes"][3] * 100;
+    document.getElementById("Sway").value = message["axes"][0] * 100;
+    document.getElementById("Heave").value = message["axes"][1] * -100;
+    document.getElementById("Pitch").value = message["axes"][5] * 100;
     document.getElementById("Roll").value = message["axes"][4] * 100;
-    document.getElementById("Yaw").value = message["axes"][5] * 100;
+    document.getElementById("Yaw").value = message["axes"][2] * 100;
 });
 
 //Subscribe PanTilt angele
@@ -155,6 +195,18 @@ ls3.subscribe(function(message){
 
 });
 */
+//Subscribe Attitude potic
+var ls3 = new ROSLIB.Topic({
+    ros:ros,
+    name : '/vehicleAttitude',
+    messageType : 'geometry_msgs/Vector3'
+});
+ls3.subscribe(function(message){
+    document.getElementById("angle_yaw").innerHTML = (message.z * 180 / Math.PI).toFixed(2);
+    document.getElementById("angle_pitch").innerHTML = (message.y * 180 / Math.PI).toFixed(2);
+    document.getElementById("angle_roll").innerHTML = (message.x * 180 / Math.PI).toFixed(2);
+});
+
 
 //Subscribe Control mode
 var ls4 = new ROSLIB.Topic({

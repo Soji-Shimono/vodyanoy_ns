@@ -11,6 +11,7 @@ import tf
 
 
 mode = 0
+last_mode = 0
 twSpd = Twist()
 imu = Imu()
 eular = Vector3()
@@ -29,37 +30,41 @@ YAW_P, YAW_I, YAW_D, YAW_FF = 0,0,0,0 #PID,feedforward param
 ROLL_P, ROLL_I, ROLL_D, ROLL_FF = 0,0,0,0 #PID,feedforward param
 PITCH_P, PITCH_I, PITCH_D, PITCH_FF = 0,0,0,0 #PID,feedforward param
 DEPTH_P, DEPTH_I, DEPTH_D, DEPTH_FF = 0,0,0,0 #PID,feedforward param
-node_cycle = 10.0
-depth = 0
+node_cycle = 50.0
+depth = 0.0
 
 def getparam():
     global spd2frc_surge, spd2frc_sway, spd2frc_heave, spd2frc_pitch, spd2frc_roll, spd2frc_yaw
     global YAW_P, YAW_I, YAW_D, YAW_FF
     global ROLL_P, ROLL_I, ROLL_D, ROLL_FF
     global PITCH_P, PITCH_I, PITCH_D, PITCH_FF
-
+    global DEPTH_P, DEPTH_I, DEPTH_D, DEPTH_FF
     spd2frc_surge = rospy.get_param("~spd2frc_surge",4.75)
     spd2frc_sway = rospy.get_param("~spd2frc_sway",49.5)
     spd2frc_heave = rospy.get_param("~spd2frc_heave",49.5)
     spd2frc_pitch = rospy.get_param("~spd2frc_pitch",5)
     spd2frc_roll = rospy.get_param("~spd2frc_roll",5)
     spd2frc_yaw = rospy.get_param("~spd2frc_yaw",5)
-    YAW_P  = rospy.get_param("~YAW_P",1)
-    YAW_I  = rospy.get_param("~YAW_I",1)
-    YAW_D  = rospy.get_param("~YAW_D",1)
+    
     YAW_FF  = rospy.get_param("~YAW_FF",1)
-    ROLL_P  = rospy.get_param("~ROLL_P",1)
-    ROLL_I  = rospy.get_param("~ROLL_I",1)
-    ROLL_D  = rospy.get_param("~ROLL_D",1)
-    ROLL_FF  = rospy.get_param("~ROLL_FF",1)
+    YAW_P  = rospy.get_param("~YAW_P",1)
+    YAW_I  = rospy.get_param("~YAW_I",0)
+    YAW_D  = rospy.get_param("~YAW_D",0)
+
+    ROLL_FF  = rospy.get_param("~ROLL_FF",0.1)
+    ROLL_P  = rospy.get_param("~ROLL_P",0.)
+    ROLL_I  = rospy.get_param("~ROLL_I",0)
+    ROLL_D  = rospy.get_param("~ROLL_D",0)
+
+    PITCH_FF  = rospy.get_param("~PITCH_FF",0.1)
     PITCH_P  = rospy.get_param("~PITCH_P",1)
-    PITCH_I  = rospy.get_param("~PITCH_I",1)
-    PITCH_D  = rospy.get_param("~PITCH_D",1)
-    PITCH_FF  = rospy.get_param("~PITCH_FF",1)
-    DEPTH_P  = rospy.get_param("~DEPTH_P",1)
-    DEPTH_I  = rospy.get_param("~DEPTH_I",1)
-    DEPTH_D  = rospy.get_param("~DEPTH_D",1)
+    PITCH_I  = rospy.get_param("~PITCH_I",0)
+    PITCH_D  = rospy.get_param("~PITCH_D",0)
+    
     DEPTH_FF  = rospy.get_param("~DEPTH_FF",1)
+    DEPTH_P  = rospy.get_param("~DEPTH_P",1)
+    DEPTH_I  = rospy.get_param("~DEPTH_I",0)
+    DEPTH_D  = rospy.get_param("~DEPTH_D",0)
     
     print("surge" + str(spd2frc_surge))
     print("sway" + str(spd2frc_sway))
@@ -128,12 +133,15 @@ class controler:
         self._e = e
         return u
 
-    def ff(self, target, current):
-        return ( target - current ) * self.k_ff
+    def ff(self, current):
+        return ( self.targetPos - current ) * self.k_ff
 
     def reset(self):
         self.acum = 0
         self._e = 0
+
+    def setTargetPos(self,target):
+        self.targetPos = target
 
 class stateEstimater:
     def __init__(self,value):
@@ -183,33 +191,57 @@ def main():
         if mode == 1:
             mode_catch = True
             print("Stability mode executing.")
+            if mode != last_mode:
+                rollCon.reset()
+                pitchCon.reset()
+                yawCon.reset()
+                yawCon.setTargetPos(vang.z)
+                print("Controlers are reseted.")
+
             twFrc.linear.x = twSpd.linear.x * abs(twSpd.linear.x) * spd2frc_surge
             twFrc.linear.y = twSpd.linear.y * abs(twSpd.linear.y) * spd2frc_sway
             twFrc.linear.z = twSpd.linear.z * abs(twSpd.linear.z) * spd2frc_heave
             
             yawCon.targetPos = yawCon.targetPos + twSpd.angular.z * (1 / node_cycle)
                 
-            twFrc.angular.x = rollCon.updatePID(rollCon.ff(0,vang.x),vangv.x,(1 / node_cycle))
-            twFrc.angular.y = pitchCon.updatePID(pitchCon.ff(0,vang.y),vangv.y,(1 / node_cycle))
-            twFrc.angular.z = yawCon.updatePID(yawCon.ff(yawCon.targetPos,vang.z),vangv.z,(1 / node_cycle))
+            twFrc.angular.x = -1 * rollCon.updatePID(rollCon.ff(vang.x),vangv.x,(1 / node_cycle))
+            twFrc.angular.y = pitchCon.updatePID(pitchCon.ff(vang.y),vangv.y,(1 / node_cycle))
+            twFrc.angular.z = yawCon.updatePID(yawCon.ff(vang.z),vangv.z,(1 / node_cycle))
         if mode == 2:
             mode_catch = True
             print("DepthHold mode executing.")
+            if mode != last_mode:
+                rollCon.reset()
+                pitchCon.reset()
+                yawCon.reset()
+                depthCon.reset()
+                yawCon.setTargetPos(vang.z)
+                depthCon.setTargetPos(depth)
+                print("Controlers are reseted.")
+            
             twFrc.linear.x = twSpd.linear.x * abs(twSpd.linear.x) * spd2frc_surge
             twFrc.linear.y = twSpd.linear.y * abs(twSpd.linear.y) * spd2frc_sway
 
             yawCon.targetPos = yawCon.targetPos + twSpd.angular.z * (1 / node_cycle)
             depthCon.targetPos = depthCon.targetPos + twSpd.linear.z * (1 / node_cycle)
 
-            twFrc.linear.z = yawCon.updatePID(depthCon.ff(depthCon.targetPos,depth),vehicleState.velosity_heave,(1 / node_cycle))
-            twFrc.angular.x = rollCon.updatePID(rollCon.ff(0,vang.x),vangv.x, (1 / node_cycle))
-            twFrc.angular.y = pitchCon.updatePID(pitchCon.ff(0,vang.y),vangv.y,(1 / node_cycle))
-            twFrc.angular.z = yawCon.updatePID(yawCon.ff(yawCon.targetPos,vang.z),vangv.z, (1 / node_cycle))
+            twFrc.linear.z = depthCon.updatePID(depthCon.ff(depth),vehicleState.velosity_heave,(1 / node_cycle))
+            
+            twFrc.angular.x = rollCon.updatePID(rollCon.ff(vang.x),vangv.x, (1 / node_cycle))
+            twFrc.angular.y = pitchCon.updatePID(pitchCon.ff(vang.y),vangv.y,(1 / node_cycle))
+            twFrc.angular.z = yawCon.updatePID(yawCon.ff(vang.z),vangv.z, (1 / node_cycle))
+            print(depthCon.targetPos)
+            print(depthCon.ff(depth))
+            print(depth)
+            #print(twFrc.linear.z)
         if mode == 3:
             mode_catch = True
             print("MultiAttitude mode executing.")
         if mode_catch == False:
             print("Undefined control mode executing. Mode:=" + str(mode))
+        
+        last_mode = mode
+        
         r.sleep()
         FrcPub.publish(twFrc)
 

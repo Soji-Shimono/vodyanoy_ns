@@ -87,6 +87,8 @@ def navigation(joymsg,imumsg):
             mode_bottun = joymsg.buttons[9]
         if joymsg.header.frame_id == "Speedy Gaming Controller Extended Gamepad":
             mode_bottun = joymsg.buttons[4]
+        if joymsg.header.frame_id == "GV150 Extended Gamepad":
+            mode_bottun = joymsg.buttons[4]
         if (mode_bottun == 1) and (mode_bottun != lastbutton) :
             if navigation_mode < 3:
                 navigation_mode +=1
@@ -108,8 +110,8 @@ def navigation(joymsg,imumsg):
 
         twmsg.linear.x = joymsg.axes[JOY_AXIS_SURGE] * max_surgeSpd
         twmsg.linear.y = joymsg.axes[JOY_AXIS_SWAY] * max_swaySpd
-        twmsg.linear.z = joymsg.axes[JOY_AXIS_HEAVE] * max_heaveSpd
-        twmsg.angular.z = joymsg.axes[JOY_AXIS_YAW] * max_yawRate * -1
+        twmsg.linear.z = joymsg.axes[JOY_AXIS_HEAVE] * max_heaveSpd * -1
+        twmsg.angular.z = joymsg.axes[JOY_AXIS_YAW] * max_yawRate
         
         twpub.publish(twmsg)
     except :

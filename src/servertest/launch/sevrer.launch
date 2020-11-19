@@ -5,7 +5,11 @@
   <include file="$(find motion_control)/launch/motion_control.launch" />
   <include file="$(find thruster_allocation)/launch/thruster_allocation.launch" />
   <include file="$(find can_driver)/launch/can_driver.launch" />
-  <!--node pkg = "bno055_usb_stick" name = "AHRS_Handler" type= "bno055_usb_stick_node" /-->
+  <node pkg = "bno055_usb_stick" name = "AHRS_Handler" type= "bno055_usb_stick_node" >
+    <param name="publish_tf" value="true"/>
+    <param name="pose_frame_id" value="frame1"/>
+    <param name="tf_frame_id" value="frame1"/>
+  </node>
   <!--node pkg = "pan_tilt_cnt" name= "PanTilt_Controller" type= "PT.py" /-->
   <!--node pkg = "joy2speed" name= "Navigator" type= "joy2spd.py" /-->
 </launch>
