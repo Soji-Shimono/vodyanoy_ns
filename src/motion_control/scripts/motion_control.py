@@ -20,6 +20,9 @@ pitch, roll, yaw = 0,0,0
 vacc = Vector3()
 vangv = Vector3()
 vang = Vector3()
+targetPos = Vector3()
+targetAngle = Vector3()
+vspd = Vector3()
 rm = tf.transformations.euler_matrix(math.pi,0,-math.pi/2,'sxyz')
 posrm = tf.transformations.quaternion_from_euler(math.pi,0,-math.pi/2,'sxyz')
 
@@ -30,8 +33,13 @@ YAW_P, YAW_I, YAW_D, YAW_FF = 0,0,0,0 #PID,feedforward param
 ROLL_P, ROLL_I, ROLL_D, ROLL_FF = 0,0,0,0 #PID,feedforward param
 PITCH_P, PITCH_I, PITCH_D, PITCH_FF = 0,0,0,0 #PID,feedforward param
 DEPTH_P, DEPTH_I, DEPTH_D, DEPTH_FF = 0,0,0,0 #PID,feedforward param
-node_cycle = 50.0
+
+#
+node_cycle = 100.0
 depth = 0.0
+#counter = 0
+lowerPublishCycle = 5
+countThresh =  node_cycle / lowerPublishCycle
 
 def getparam():
     global spd2frc_surge, spd2frc_sway, spd2frc_heave, spd2frc_pitch, spd2frc_roll, spd2frc_yaw
@@ -78,7 +86,6 @@ def mode_callback(message):
         mode = 2
     if message.data == "MultiAttitude":
         mode = 3
-
     print(mode)
 def spd_callback(message):
     global twSpd
@@ -117,7 +124,7 @@ def quatanion2eular(orientation):
     
 class controler:
 
-    def __init__(self,kp,ki,kd,k_ff):
+    def __init__(self,kp,ki,kd,k_ff,_angular=False):
         self.kp = kp
         self.kd = kd
         self.ki = ki
@@ -125,6 +132,7 @@ class controler:
         self.acum = 0
         self._e = 0
         self.targetPos = 0
+        self.angular = _angular
 
     def updatePID(self, target, current, dt):
         e = target - current
@@ -134,8 +142,15 @@ class controler:
         return u
 
     def ff(self, current):
-        return ( self.targetPos - current ) * self.k_ff
-
+        if self.angular:
+            if self.targetPos - current > (2* math.pi * 0.9):
+                return ( self.targetPos - current - 2* math.pi) * self.k_ff
+            elif self.targetPos - current < (-2* math.pi * 0.9):
+                return ( self.targetPos - current + 2* math.pi) * self.k_ff
+            else:
+                return ( self.targetPos - current ) * self.k_ff
+        else:
+            return ( self.targetPos - current ) * self.k_ff
     def reset(self):
         self.acum = 0
         self._e = 0
@@ -143,17 +158,26 @@ class controler:
     def setTargetPos(self,target):
         self.targetPos = target
 
+    def addTargetPos(self,value):
+        self.targetPos = self.targetPos + value
+        if self.angular:
+            if self.targetPos > 2 * math.pi:
+                self.targetPos = self.targetPos - 2 * math.pi
+            elif self.targetPos < 0:
+                self.targetPos = self.targetPos + 2 * math.pi
+
 class stateEstimater:
     def __init__(self,value):
         self.last_depth = value
         self.velosity_heave = value
+        self.f = 0.99
     def init(self):
         self.last_depth = 0
         self.last_depth
     def update(self,depth,dt):
         if self.last_depth == 0:
             self.last_depth = depth
-        self.velosity_heave = (depth - self.last_depth) / dt
+        self.velosity_heave = self.f * self.velosity_heave + (1 - self.f) * (depth - self.last_depth) / dt
         self.last_depth = depth
 
 def main():
@@ -162,27 +186,31 @@ def main():
     spdSub = rospy.Subscriber('twistSpd', Twist,spd_callback)
     posSub = rospy.Subscriber('Depth', Point,point_callback)
     imuSub = rospy.Subscriber('imu', Imu,imu_callback)
-    FrcPub = rospy.Publisher('twistFrc',Twist,queue_size=10)
-    eularPub = rospy.Publisher('vehicleAttitude',Vector3,queue_size=10)
-    eularPub2 = rospy.Publisher('vehicleAngularVelosity',Vector3,queue_size=10)
-    eularPub3 = rospy.Publisher('vehicleAcc',Vector3,queue_size=10)
+    FrcPub = rospy.Publisher('twistFrc',Twist,queue_size=1)
+    eularPub = rospy.Publisher('vehicleAttitude',Vector3,queue_size=1)
+    eularPub2 = rospy.Publisher('vehicleAngularVelosity',Vector3,queue_size=1)
+    eularPub3 = rospy.Publisher('vehicleAcc',Vector3,queue_size=1)
+    targetPosPub = rospy.Publisher('targetPos',Vector3,queue_size=1)
+    targetAnglePub = rospy.Publisher('targetAngle',Vector3,queue_size=1)
+    vehicleSpeedPub = rospy.Publisher('vehicleSpd',Vector3,queue_size=1)
     getparam()
     r = rospy.Rate(node_cycle)
 
-    yawCon = controler(YAW_P,YAW_I,YAW_D,YAW_FF)
-    rollCon = controler(ROLL_P,ROLL_I,ROLL_D,ROLL_FF)
-    pitchCon = controler(PITCH_P,PITCH_I,PITCH_D,PITCH_FF)
+    yawCon = controler(YAW_P,YAW_I,YAW_D,YAW_FF,_angular=True)
+    rollCon = controler(ROLL_P,ROLL_I,ROLL_D,ROLL_FF,_angular=True)
+    pitchCon = controler(PITCH_P,PITCH_I,PITCH_D,PITCH_FF,_angular=True)
     depthCon = controler(DEPTH_P,DEPTH_I,DEPTH_D,DEPTH_FF)
     
     vehicleState = stateEstimater(0)
     mode_catch = False
+    counter = 0
     while not rospy.is_shutdown():
         #
         twFrc = Twist()
         vehicleState.update(depth,1 / node_cycle)
 
         if mode == 0:
-            print("Dict mode executing.")
+            #print("Dict mode executing.")
             mode_catch = True
             twFrc.linear.x = twSpd.linear.x * abs(twSpd.linear.x) * spd2frc_surge
             twFrc.linear.y = twSpd.linear.y * abs(twSpd.linear.y) * spd2frc_sway
@@ -190,65 +218,95 @@ def main():
             twFrc.angular.z = twSpd.angular.z * spd2frc_yaw
         if mode == 1:
             mode_catch = True
-            print("Stability mode executing.")
+            #print("Stability mode executing.")
             if mode != last_mode:
                 rollCon.reset()
                 pitchCon.reset()
                 yawCon.reset()
                 yawCon.setTargetPos(vang.z)
-                print("Controlers are reseted.")
+                pitchCon.setTargetPos(0)
+                print("mode: " + str(mode) +", Controlers are reseted.")
 
             twFrc.linear.x = twSpd.linear.x * abs(twSpd.linear.x) * spd2frc_surge
             twFrc.linear.y = twSpd.linear.y * abs(twSpd.linear.y) * spd2frc_sway
             twFrc.linear.z = twSpd.linear.z * abs(twSpd.linear.z) * spd2frc_heave
             
-            yawCon.targetPos = yawCon.targetPos + twSpd.angular.z * (1 / node_cycle)
-                
+            #yawCon.targetPos = yawCon.targetPos + twSpd.angular.z * (1 / node_cycle)
+            yawCon.addTargetPos(twSpd.angular.z * (1 / node_cycle))
+            #pitchCon.targetPos = -5
+                 
             twFrc.angular.x = -1 * rollCon.updatePID(rollCon.ff(vang.x),vangv.x,(1 / node_cycle))
             twFrc.angular.y = pitchCon.updatePID(pitchCon.ff(vang.y),vangv.y,(1 / node_cycle))
             twFrc.angular.z = yawCon.updatePID(yawCon.ff(vang.z),vangv.z,(1 / node_cycle))
         if mode == 2:
             mode_catch = True
-            print("DepthHold mode executing.")
+            #print("DepthHold mode executing.")
             if mode != last_mode:
                 rollCon.reset()
                 pitchCon.reset()
                 yawCon.reset()
                 depthCon.reset()
                 yawCon.setTargetPos(vang.z)
+                pitchCon.setTargetPos(0)
                 depthCon.setTargetPos(depth)
-                print("Controlers are reseted.")
+                print("mode: " + str(mode) +", Controlers are reseted.")
             
             twFrc.linear.x = twSpd.linear.x * abs(twSpd.linear.x) * spd2frc_surge
             twFrc.linear.y = twSpd.linear.y * abs(twSpd.linear.y) * spd2frc_sway
 
-            yawCon.targetPos = yawCon.targetPos + twSpd.angular.z * (1 / node_cycle)
-            depthCon.targetPos = depthCon.targetPos + twSpd.linear.z * (1 / node_cycle)
+            #yawCon.targetPos = yawCon.targetPos + twSpd.angular.z * (1 / node_cycle)
+            yawCon.addTargetPos(twSpd.angular.z * (1 / node_cycle))
+            #depthCon.targetPos = depthCon.targetPos + twSpd.linear.z * (1 / node_cycle)
+            depthCon.addTargetPos(twSpd.linear.z / 10 * (1 / node_cycle))
 
             twFrc.linear.z = depthCon.updatePID(depthCon.ff(depth),vehicleState.velosity_heave,(1 / node_cycle))
             
-            twFrc.angular.x = rollCon.updatePID(rollCon.ff(vang.x),vangv.x, (1 / node_cycle))
+            twFrc.angular.x = -1 * rollCon.updatePID(rollCon.ff(vang.x),vangv.x,(1 / node_cycle))
             twFrc.angular.y = pitchCon.updatePID(pitchCon.ff(vang.y),vangv.y,(1 / node_cycle))
-            twFrc.angular.z = yawCon.updatePID(yawCon.ff(vang.z),vangv.z, (1 / node_cycle))
-            print(depthCon.targetPos)
-            print(depthCon.ff(depth))
-            print(depth)
+            twFrc.angular.z = yawCon.updatePID(yawCon.ff(vang.z),vangv.z,(1 / node_cycle))
+            #print(depthCon.targetPos)
+            #print(depthCon.ff(depth))
+            #print(depth)
             #print(twFrc.linear.z)
         if mode == 3:
             mode_catch = True
-            print("MultiAttitude mode executing.")
+            if mode != last_mode:
+                rollCon.reset()
+                pitchCon.reset()
+                yawCon.reset()
+                yawCon.setTargetPos(vang.z)
+                pitchCon.setTargetPos(-5)
+                print("mode: " + str(mode) +", Controlers are reseted.")
+            twFrc.linear.x = twSpd.linear.x * abs(twSpd.linear.x) * spd2frc_surge
+            twFrc.linear.y = twSpd.linear.y * abs(twSpd.linear.y) * spd2frc_sway
+            twFrc.linear.z = depthCon.updatePID(twSpd.linear.z / 3,vehicleState.velosity_heave,(1 / node_cycle))
+            twFrc.angular.z = yawCon.updatePID(twSpd.angular.z / 3, vangv.z, (1 / node_cycle))
+	    print(yawCon.acum)
         if mode_catch == False:
             print("Undefined control mode executing. Mode:=" + str(mode))
         
         last_mode = mode
         
         r.sleep()
+        targetAngle.z = yawCon.targetPos
+        targetPos.z = depthCon.targetPos
+        vspd.z = vehicleState.velosity_heave
         FrcPub.publish(twFrc)
-
-        print(twFrc)
-        eularPub.publish(vang)
-        eularPub2.publish(vangv)
+        #eularPub.publish(vang)
+        #eularPub2.publish(vangv)
         eularPub3.publish(vacc)
+        vehicleSpeedPub.publish(vspd)
+        
+        #low rate potics
+        counter = counter + 1
+        if counter == countThresh:
+            eularPub.publish(vang)
+            eularPub2.publish(vangv)
+            eularPub3.publish(vacc)
+            targetAnglePub.publish(targetAngle)
+            targetPosPub.publish(targetPos)
+            #vehicleSpeedPub.publish(vspd)
+            counter = 0
 
    
 

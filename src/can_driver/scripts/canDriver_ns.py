@@ -50,7 +50,7 @@ pub_th = rospy.Publisher('Raw_ThrusterCommand',ThrustersCommand,queue_size=10)
 dT = 0
 DEADBAND = 1
 MAX_COMMAND_150W = 10000
-MAX_COMMAND_300W = 6000
+MAX_COMMAND_300W = 32000
 last_b1,last_b2,last_b3,last_b4,last_b5,last_b6 = 0,0,0,0,0,0
 
 th1 = thrusthandler(DEADBAND, 1, MAX_COMMAND_150W)

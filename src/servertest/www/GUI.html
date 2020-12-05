@@ -18,7 +18,7 @@
                 }
                 
                 .elem{
-                    width: 200px; height: 230px; text-align: center;
+                    width: 200px; height: 230px; 
                     background-color:rgba(81, 91, 97, 0.3);
                 }
                 .pos{
@@ -75,13 +75,13 @@
                             Gamepad : <var id = "padname">null</var>
                         </p>
                         <p class="txtspc">
-                            Depth: <var id="depth">test</var> m
+                            Depth: <var id="depth">test</var> m <var id="depthTarget" style="font-size: 8pt;">test</var> <var id="depthSpeed">test</var>
                             <br>Watertemp: <var id="watertemp">test</var> ℃
                         </p>
                         <p class="txtspc">
-                            Heading: <var id="angle_yaw">test</var> °
-                            <br>Pitch: <var id="angle_pitch">test</var> °
-                            <br>Roll: <var id="angle_roll">test</var> °
+                            Yaw: <var id="angle_yaw">test</var> ° <var id="yawTarget" style="font-size: 8pt;">test</var> <var id="yawSpeed">test</var>
+                            <br>Pitch: <var id="angle_pitch">test</var> ° <var id="pitchTarget" style="font-size: 8pt;">test</var> <var id="pitchSpeed">test</var>
+                            <br>Roll: <var id="angle_roll">test</var> ° <var id="rollTarget" style="font-size: 8pt;">test</var> <var id="rollSpeed">test</var>
                         </p>
                         <!--p class="txtspc">
                             Cam-Pan: <var id="angle_pan">test</var> °
@@ -101,27 +101,27 @@
                     <div class="elem3 pos3">
                             <p class="hrange">
                                 Surge
-                                <br><input id = "Surge"style="width: 140px;" type ="range" min = "-100.0" max = "100.0"/>
+                                <br><input id = "Surge"style="width: 140px;" type ="range" min = "-100.0" max = "100.0"/> <var id="spd_linear_x">test</var>
                             </p>
                             <p class="hrange">
                                 Sway
-                                <br><input id = "Sway" style="width: 140px;" type ="range" min = "-100" max = "100"/>
+                                <br><input id = "Sway" style="width: 140px;" type ="range" min = "-100" max = "100"/> <var id="spd_linear_y">test</var>
                             </p>
                             <p class = "hrange">
                                 Heave
-                                <br><input id = "Heave" style="width: 140px;" type ="range" min = "-100" max = "100"/>
+                                <br><input id = "Heave" style="width: 140px;" type ="range" min = "-100" max = "100"/> <var id="spd_linear_z">test</var>
                             </p>
                             <p class = "hrange">
                                 Roll
-                                <br><input id = "Roll" style="width: 140px;" type ="range" min = "-100" max = "100"/>
+                                <br><input id = "Roll" style="width: 140px;" type ="range" min = "-100" max = "100"/> <var id="spd_angular_x">test</var>
                             </p>
                             <p class = "hrange">
                                 Pitch
-                                <br><input id = "Pitch" style="width: 140px;" type ="range" min = "-100" max = "100"/>
+                                <br><input id = "Pitch" style="width: 140px;" type ="range" min = "-100" max = "100"/> <var id="spd_angular_y">test</var>
                             </p>
                             <p class ="hrange">
                                 Yaw
-                                <br><input id = "Yaw" style="width: 140px;" type ="range" min = "-100" max = "100"/>
+                                <br><input id = "Yaw" style="width: 140px;" type ="range" min = "-100" max = "100"/> <var id="spd_angular_z">test</var>
                             </p>
                     </div>
                     <!--div class="elem4 pos4">

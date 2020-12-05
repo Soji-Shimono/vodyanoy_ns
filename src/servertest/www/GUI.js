@@ -253,5 +253,64 @@ ls7.subscribe(function(message){
     document.getElementById("depth").innerHTML = message.z.toFixed(2);
 });
 
+//Subscribe targetPos
+var ls8 = new ROSLIB.Topic({
+    ros:ros,
+    name : '/targetPos',
+    messageType : 'geometry_msgs/Vector3'
+});
+ls8.subscribe(function(message){
+    document.getElementById("depthTarget").innerHTML = message.z.toFixed(1);
+});
+
+//Subscribe targetPos
+var ls9 = new ROSLIB.Topic({
+    ros:ros,
+    name : '/targetAngle',
+    messageType : 'geometry_msgs/Vector3'
+});
+ls9.subscribe(function(message){
+    document.getElementById("rollTarget").innerHTML = (message.x * 180 / Math.PI).toFixed(1);
+    document.getElementById("pitchTarget").innerHTML = (message.y * 180 / Math.PI).toFixed(1);
+    document.getElementById("yawTarget").innerHTML = (message.z * 180 / Math.PI).toFixed(1);
+});
+
+//Subscribe targetPos
+var ls10 = new ROSLIB.Topic({
+    ros:ros,
+    name : '/vehicleAngularVelosity',
+    messageType : 'geometry_msgs/Vector3'
+});
+ls10.subscribe(function(message){
+    document.getElementById("rollSpeed").innerHTML = (message.x).toFixed(2);
+    document.getElementById("pitchSpeed").innerHTML = (message.y).toFixed(2);
+    document.getElementById("yawSpeed").innerHTML = (message.z).toFixed(2);
+});
+
+//Subscribe targetPos
+var ls11 = new ROSLIB.Topic({
+    ros:ros,
+    name : '/vehicleSpd',
+    messageType : 'geometry_msgs/Vector3'
+});
+ls11.subscribe(function(message){
+    document.getElementById("depthSpeed").innerHTML = (message.z).toFixed(2);
+});
+
+//Subscribe targetPos
+var ls12 = new ROSLIB.Topic({
+    ros:ros,
+    name : '/twistSpd',
+    messageType : 'geometry_msgs/Twist'
+});
+ls12.subscribe(function(message){
+    document.getElementById("spd_linear_x").innerHTML = (message.linear.x).toFixed(2);
+    document.getElementById("spd_linear_y").innerHTML = (message.linear.y).toFixed(2);
+    document.getElementById("spd_linear_z").innerHTML = (message.linear.z).toFixed(2);
+    document.getElementById("spd_angular_x").innerHTML = (message.angular.x).toFixed(2);
+    document.getElementById("spd_angular_y").innerHTML = (message.angular.y).toFixed(2);
+    document.getElementById("spd_angular_z").innerHTML = (message.angular.z).toFixed(2);
+});
+
 document.getElementById('camstream').data='http://192.168.2.111:8080/?action=stream';
 //document.getElementById('camstream').data='http://192.168.128.104:8080/?action=stream';
