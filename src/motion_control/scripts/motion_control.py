@@ -143,9 +143,9 @@ class controler:
 
     def ff(self, current):
         if self.angular:
-            if self.targetPos - current > (2* math.pi * 0.9):
+            if self.targetPos - current > (math.pi): 
                 return ( self.targetPos - current - 2* math.pi) * self.k_ff
-            elif self.targetPos - current < (-2* math.pi * 0.9):
+            elif self.targetPos - current < (-math.pi):
                 return ( self.targetPos - current + 2* math.pi) * self.k_ff
             else:
                 return ( self.targetPos - current ) * self.k_ff

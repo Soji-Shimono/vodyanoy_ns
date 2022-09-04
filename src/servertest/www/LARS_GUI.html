@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+            <meta charset="utf-8">
+            <title>Vodyanoy-ns GUI</title>
+            <style>
+                div{
+                    position:absolute;
+                }
+                /*
+                #panel{
+                    left:0px; top: 0px; width: 1040px; height: 500px;
+                    background-image: url(https://upload.wikimedia.org/wikipedia/commons/7/7a/Caribbean_sea_-_Morrocoy_National_Park_-_Playa_escondida.jpg)
+                }
+                */
+                #camstream{
+                      left:0px; top: 0px; width: 1080px; height: 720px;
+                }
+                
+                .elem{
+                    width: 250px; height: 230px; 
+                    background-color:rgba(81, 91, 97, 0.3);
+                }
+                .pos{
+                    left: 500px; top: 0px;
+                }
+                .elem2{
+                    width: 200px; height: 85px;
+                    background-color:rgba(81, 91, 97, 0.3);
+                }
+                .pos2{
+                    left: 830px; top: 240px;
+                }
+                .elem3{
+                    width: 200px; height: 250px; text-align: center;
+                    background-color:rgba(81, 91, 97, 0.3);
+                }
+                .pos3{
+                    left: 830px; top: 335px;
+                }
+                .elem4{
+                    width: 30px; height: 165px; text-align: center;
+                    background-color:rgba(81, 91, 97, 0.3);
+                }
+                .pos4{
+                    left: 1000px; top: 335px;
+                }
+                .txtspc{
+                    margin: 0.5em;
+                }
+                .mode{
+                    background-color: coral;
+                    margin: 0.2rem;
+                }
+                .lefttag{
+                    text-align: left; font-size: 10pt; line-height: 10px; margin: 0.5rem;                  
+                }
+                .hrange{
+                    text-align: left; font-size: 10pt; line-height: 16px; margin: 0.5rem;
+    
+                }
+                .vrange{
+                    text-align: left; font-size: 10pt; line-height: 8px; margin: 0.2rem; writing-mode: vertical-lr;
+                }
+            </style>
+    </head>
+    <body>
+            <div id='panel'>
+                    <center>LARS control GUI</center>
+                    <div class="elem pos">
+                        <p class="mode">
+                            Status
+                        </p>
+                        <p class="txtspc">
+                            ReelSpeed: <var id="reelspd">test</var> [rad/sec]
+                            <br>ReelCurrent: <var id="reelcrnt">test</var> [A]
+                            <br>TensiionSpeed: <var id="tensionspd">test</var>[rad/sec]
+                            <br>TensiionCurrent: <var id="tensioncrnt">test</var>[A]
+                            <br>Stage_Motor_L: <var id="stagemotor_L">test</var>[A]
+                            <br>Stage_Motor_R: <var id="stagemotor_R">test</var>[A]
+                        </p>
+                        <p class="txtspc">
+                            Yaw: <var id="angle_yaw">test</var> ° 
+                            <br>Pitch: <var id="angle_pitch">test</var> ° 
+                            <br>Roll: <var id="angle_roll">test</var> ° 
+                        </p>
+                    </div>
+                    <div class="elem2 pos2">
+                            <p class="lefttag">
+                                Voltage <var id="battVoltage_Value">test</var> [V]
+                                <br><input id = "battVoltage" type ="range" min = "0" max = 50/>
+                            </p> 
+                            <p class = "lefttag">
+                                Current <var id="battCurrent_Value">test</var> [A]
+                                <br><input id = "battCurrent" type ="range" min = "0" max = "50"/>
+                            </p>
+                    </div>
+                    <div class="elem3 pos3">
+                            <p class="hrange">
+                                Reel_Speed
+                                <br><input id = "ReeltargetSpeed"style="width: 140px;" type ="range" min = "-100.0" max = "100.0"/> <var id="reel_spd">test</var>
+                                <br><input id = "Reelup" style="width: 40px;" type ="button" value ="Up"/>
+                                <br><input id = "Reeldown" style="width: 40px;" type ="button" value ="Down"/>
+                                <br>Stage_Deploy
+                                <br><input id = "Stageup" style="width: 40px;" type ="button" value ="Up"/>
+                                <br><input id = "Stagedown" style="width: 40px;" type ="button" value ="Down"/>
+                    </div>
+            </div>         
+            <!--div id='camstream'></div -->
+            <object id="camstream" style="left:0px; top: 0px; width:1030px;height:720px"></object>   
+        <script src="https://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+        <script src="https://static.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
+        <script src="GUI.js"></script>
+    </body>
+</html>

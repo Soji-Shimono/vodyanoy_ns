@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+            <meta charset="utf-8">
+            <title>Vodyanoy-ns GUI</title>
+            <style>
+                div{
+                    position:absolute;
+                }
+                /*
+                #panel{
+                    left:0px; top: 0px; width: 1040px; height: 500px;
+                    background-image: url(https://upload.wikimedia.org/wikipedia/commons/7/7a/Caribbean_sea_-_Morrocoy_National_Park_-_Playa_escondida.jpg)
+                }
+                */
+                #camstream{
+                      left:0px; top: 0px; width: 1080px; height: 720px;
+                }
+                
+                .elem{
+                    width: 200px; height: 230px; 
+                    background-color:rgba(81, 91, 97, 0.3);
+                }
+                .pos{
+                    left: 830px; top: 0px;
+                }
+                .elem2{
+                    width: 200px; height: 85px;
+                    background-color:rgba(81, 91, 97, 0.3);
+                }
+                .pos2{
+                    left: 830px; top: 240px;
+                }
+                .elem3{
+                    width: 200px; height: 250px; text-align: center;
+                    background-color:rgba(81, 91, 97, 0.3);
+                }
+                .pos3{
+                    left: 830px; top: 335px;
+                }
+                .elem4{
+                    width: 30px; height: 165px; text-align: center;
+                    background-color:rgba(81, 91, 97, 0.3);
+                }
+                .pos4{
+                    left: 1000px; top: 335px;
+                }
+                .txtspc{
+                    margin: 0.5em;
+                }
+                .mode{
+                    background-color: coral;
+                    margin: 0.2rem;
+                }
+                .lefttag{
+                    text-align: left; font-size: 10pt; line-height: 10px; margin: 0.5rem;                  
+                }
+                .hrange{
+                    text-align: left; font-size: 10pt; line-height: 16px; margin: 0.5rem;
+    
+                }
+                .vrange{
+                    text-align: left; font-size: 10pt; line-height: 8px; margin: 0.2rem; writing-mode: vertical-lr;
+                }
+            </style>
+    </head>
+    <body>
+            <div>
+                <img id = 'videosource' src = "http://192.168.2.111:8080/?action=stream">
+                <video autoplay loop="true" src="#videosource"></video>
+            </div>
+            <div id='panel'>
+                    <center>Vodyanoy-ns control GUI</center>
+                    <div class="elem pos">
+                        <p class="mode">
+                            Mode : <var id = "mode">test</var>
+                        </p>
+                        <p class="txtspc">
+                            Gamepad : <var id = "padname">null</var>
+                        </p>
+                        <p class="txtspc">
+                            Depth: <var id="depth">test</var> m <var id="depthTarget" style="font-size: 8pt;">test</var> <var id="depthSpeed">test</var>
+                            <br>Watertemp: <var id="watertemp">test</var> ℃
+                        </p>
+                        <p class="txtspc">
+                            Yaw: <var id="angle_yaw">test</var> ° <var id="yawTarget" style="font-size: 8pt;">test</var> <var id="yawSpeed">test</var>
+                            <br>Pitch: <var id="angle_pitch">test</var> ° <var id="pitchTarget" style="font-size: 8pt;">test</var> <var id="pitchSpeed">test</var>
+                            <br>Roll: <var id="angle_roll">test</var> ° <var id="rollTarget" style="font-size: 8pt;">test</var> <var id="rollSpeed">test</var>
+                        </p>
+                        <!--p class="txtspc">
+                            Cam-Pan: <var id="angle_pan">test</var> °
+                            <br>Cam-Tilt: <var id="angle_tilt">test</var> °
+                        </p-->
+                    </div>
+                    <div class="elem2 pos2">
+                            <p class="lefttag">
+                                Voltage <var id="battVoltage_Value">test</var> [V]
+                                <br><input id = "battVoltage" type ="range" min = "0" max = 50/>
+                            </p> 
+                            <p class = "lefttag">
+                                Current <var id="battCurrent_Value">test</var> [A]
+                                <br><input id = "battCurrent" type ="range" min = "0" max = "50"/>
+                            </p>
+                    </div>
+                    <div class="elem3 pos3">
+                            <p class="hrange">
+                                Surge
+                                <br><input id = "Surge"style="width: 140px;" type ="range" min = "-100.0" max = "100.0"/> <var id="spd_linear_x">test</var>
+                            </p>
+                            <p class="hrange">
+                                Sway
+                                <br><input id = "Sway" style="width: 140px;" type ="range" min = "-100" max = "100"/> <var id="spd_linear_y">test</var>
+                            </p>
+                            <p class = "hrange">
+                                Heave
+                                <br><input id = "Heave" style="width: 140px;" type ="range" min = "-100" max = "100"/> <var id="spd_linear_z">test</var>
+                            </p>
+                            <p class = "hrange">
+                                Roll
+                                <br><input id = "Roll" style="width: 140px;" type ="range" min = "-100" max = "100"/> <var id="spd_angular_x">test</var>
+                            </p>
+                            <p class = "hrange">
+                                Pitch
+                                <br><input id = "Pitch" style="width: 140px;" type ="range" min = "-100" max = "100"/> <var id="spd_angular_y">test</var>
+                            </p>
+                            <p class ="hrange">
+                                Yaw
+                                <br><input id = "Yaw" style="width: 140px;" type ="range" min = "-100" max = "100"/> <var id="spd_angular_z">test</var>
+                            </p>
+                    </div>
+                    <!--div class="elem4 pos4">
+                        <p class = "vrange">
+                            Pitch
+                            <br><input id = "Roll" style="height: 45px;" type ="range" min = "-100" max = "100"/>
+                        </p>
+                        <p class = "vrange">
+                            Roll
+                            <br><input id = "Pitch"style="height: 45px;" type ="range" min = "-100" max = "100"/>
+                        </p>
+                        <p class ="vrange">
+                            Yaw
+                            <br><input id = "Yaw"style="height: 45px;" type ="range" min = "-100" max = "100"/>
+                        </p>
+                    </div-->
+            </div>         
+            <!--div id='camstream'></div -->
+            <object id="camstream" style="left:0px; top: 0px; width:1030px;height:720px"></object>   
+        <script src="https://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+        <script src="https://static.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
+        <script src="GUI2.js"></script>
+    </body>
+</html>

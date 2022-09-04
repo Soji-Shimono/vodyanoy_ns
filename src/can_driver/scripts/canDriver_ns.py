@@ -98,7 +98,7 @@ def callback(message):
         _b1 = rate2com(message.Thruster6.parsentage,MAX_COMMAND_150W,DEADBAND)
 
         mode = 2
-        print("mode2")
+        #print("mode2")
     else:
         _b1 = int(message.Thruster1.rpm * 5)
         _b2 = int(message.Thruster2.rpm * 5)
@@ -107,7 +107,7 @@ def callback(message):
         _b5 = int(message.Thruster5.rpm * 5)
         _b6 = int(message.Thruster6.rpm * 5)
         print("mode_")
-
+    '''
     if(last_b1 * _b1 < 0):
         _b1 = 0
     if(last_b2 * _b2 < 0):
@@ -127,6 +127,13 @@ def callback(message):
     last_b4 = _b4
     last_b5 = _b5
     last_b6 = _b6
+    '''
+    #_b1 = 0
+    #_b2 = 0
+    #_b3 = 0
+    #_b4 = 0
+    #_b5 = 0
+    #_b6 = 0
 
     b1 = struct.pack('>h',_b1)
     b2 = struct.pack('>h',_b2)
@@ -143,15 +150,16 @@ def callback(message):
     thcom.Thruster6.parsentage = _b6
     pub_th.publish(thcom)
 
+    #print(b3[0],b3[1])
     msg = can.Message(arbitration_id=0x73, dlc=1, data=[mode],extended_id=False)
     #print(msg)
     bus.send(msg)
     msg = can.Message(arbitration_id=0x74, dlc=8, data=[b1[0], b1[1], b2[0], b2[1], b3[0], b3[1], b4[0], b4[1]],extended_id=False)
     bus.send(msg)
-    print(msg)
+    #print(msg)
     msg = can.Message(arbitration_id=0x75, dlc=4, data=[b5[0], b5[1], b6[0], b6[1]], extended_id=False)
     bus.send(msg)
-    print(msg)
+    #print(msg)
     #print("Data_Received")
     #print("test")
 	#can.Message(timestamp=0.0, arbitration_id=0, is_extended_id=None, is_remote_frame=False, 
@@ -232,7 +240,8 @@ def main():
             battmsg.voltage = battInfo_update(msg)[0]
             battmsg.current = battInfo_update(msg)[1]
             pub_batt.publish(battmsg)
-    
+        elif msg.arbitration_id == 23:
+            print(msg)
         #r.sleep()        
 
 if __name__ == '__main__':
