@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+#Joy key assign
+#0: 
 import rospy
 import math
 import copy
@@ -8,15 +10,21 @@ from sensor_msgs.msg import Imu
 from geometry_msgs.msg import Twist
 from pt_msg.msg import PanTiltAngles
 from std_msgs.msg import String
+from std_msgs.msg import ByteMultiArray
 
 
 ptpub = rospy.Publisher('PanTiltAngles',PanTiltAngles,queue_size=10)
+lightpub = rospy.Publisher('LightPower',ByteMultiArray,queue_size=10)
 twpub = rospy.Publisher('twistSpd',Twist,queue_size=10)
 modepub = rospy.Publisher('mode',String,queue_size=10)
+
 joymsg = Joy()
 imumsg = Imu()
+
 panangle = 0
 tiltangle = 0
+lightPower_forward = 0
+lightPower_downward = 0
 navigation_mode = 0
 lastbutton = 0
 #const
@@ -75,24 +83,49 @@ def ptcnt(msg):
         ptpub.publish(ptmsg)
     except :
         print("message read error")
+
+def lightcnt(msg):
+    global lightPower_forward
+    global lightPower_downward
+    try:
+        if (msg.buttons[5] == 1) and (msg.buttons[7] == 0) and lightPower_forward < 100:
+            lightPower_forward +=5
+        if (msg.buttons[7] == 1) and (msg.buttons[5] == 0) and lightPower_forward > 0:
+            lightPower_forward -=5
+        if (msg.buttons[4] == 1) and (msg.buttons[6] == 0) and lightPower_downward < 100:
+            lightPower_downward +=5
+        if (msg.buttons[6] == 1) and (msg.buttons[4] == 0) and lightPower_downward > 0:
+            lightPower_downward -=5
+        array=[]
+        array.append(lightPower_forward)
+        array.append(lightPower_downward)
+        lightmsg = ByteMultiArray(data=array)
+        lightpub.publish(lightmsg)
+    except:
+        print("message read error")
     
+
 def navigation(joymsg,imumsg):
     #0: direct, 1: rate control, 2:rate and abusolute heading and depth
     global navigation_mode
     global lastbutton
     twmsg = Twist()
     modemsg = String()
+    abort_button = 0
     try:
         if joymsg.header.frame_id == "xinput":
             mode_bottun = joymsg.buttons[9]
         if joymsg.header.frame_id == "Speedy Gaming Controller Extended Gamepad":
-            mode_bottun = joymsg.buttons[4]
+            mode_bottun = joymsg.buttons[3]
+            abort_button = joymsg.buttons[1]
         if joymsg.header.frame_id == "GV150 Extended Gamepad":
             mode_bottun = joymsg.buttons[4]
         if (mode_bottun == 1) and (mode_bottun != lastbutton) :
             if navigation_mode < 3:
                 navigation_mode +=1
             else:
+                navigation_mode = 0
+            if abort_button == 1:
                 navigation_mode = 0
 
             modemsg.data = "null"
@@ -126,6 +159,7 @@ def main():
     
     while not rospy.is_shutdown():
         ptcnt(joymsg)
+        lightcnt(joymsg)
         navigation(joymsg,imumsg)  
         #print(joymsg)      
         r.sleep()     

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+            <meta charset="utf-8">
+            <title>Vodyanoy-ns GUI</title>
+            <style>
+                div{
+                    position:absolute;
+                }
+                .elem{
+                    width: 200px; height: 200px; 
+                    background-color:rgba(81, 91, 97, 0.3);
+                }
+                .pos{
+                    left: 0px; top: 720px;
+                }
+                .elem2{
+                    width: 200px; height: 200px;
+                    background-color:rgba(81, 91, 97, 0.3);
+                }
+                .pos2{
+                    left: 205px; top: 720px;
+                }
+                .pos2-2{
+                    left: 410px; top: 720px;
+                }
+                .elem3{
+                    width: 200px; height: 200px; text-align: center;
+                    background-color:rgba(81, 91, 97, 0.3);
+                }
+                .pos3{
+                    left: 615px; top: 720px;
+                }
+                .pos4{
+                    left: 820px; top: 720px;
+                }
+                .posimg{
+                    left: 0px; top: 0px;
+                }
+                .txtspc{
+                    margin: 0.5em;
+                }
+                .mode{
+                    background-color: coral;
+                    margin: 0.2rem;
+                }
+                .index{
+                    background-color: rgb(90, 110, 112);
+                    margin: 0.2rem;
+                    text-align: center;
+                }
+                .lefttag{
+                    text-align: left; font-size: 10pt; line-height: 16px; margin: 0.5rem;                  
+                }
+                .hrange{
+                    text-align: left; font-size: 10pt; line-height: 16px; margin: 0.5rem;
+    
+                }
+                .vrange{
+                    text-align: left; font-size: 10pt; line-height: 8px; margin: 0.2rem; writing-mode: vertical-lr;
+                }
+                br{
+                    margin: 0.1rem;
+                }
+            </style>
+    </head>
+    <body>
+            <div class="posimg">
+                <img id = 'videosource' src = "http://192.168.2.111:8080/?action=stream">
+                <video autoplay loop="true" src="#videosource"></video>
+            </div>
+            <!-- <div id='panel' class="pos"> -->
+                    <div class="elem pos">
+                        <p class="mode">
+                            Mode : <var id = "mode">test</var>
+                        </p>
+                        <p class="txtspc">
+                            Gamepad : <var id = "padname">null</var>
+                        </p>
+                        <p class="lefttag">
+                            Voltage <var id="battVoltage_Value">test</var> [V]
+                            <br><input id = "battVoltage" style="width: 180px;" type ="range" min = "0" max = 33/>
+                        </p> 
+                        <p class = "lefttag">
+                            Current <var id="battCurrent_Value">test</var> [A]
+                            <br><input id = "battCurrent" style="width: 180px;" type ="range" min = "0" max = "50"/>
+                        </p>
+                    </div>
+                    <div class="elem2 pos2">
+                        <p class="index">Attitude</p>
+                        <p class="txtspc">
+                            Yaw: <var id="angle_yaw">test</var> ° <var id="yawTarget" style="font-size: 8pt;">test</var> <var id="yawSpeed">test</var>
+                            <br>Pitch: <var id="angle_pitch">test</var> ° <var id="pitchTarget" style="font-size: 8pt;">test</var> <var id="pitchSpeed">test</var>
+                            <br>Roll: <var id="angle_roll">test</var> ° <var id="rollTarget" style="font-size: 8pt;">test</var> <var id="rollSpeed">test</var>
+                        </p>
+                    </div>
+                    <div class="elem2 pos2-2">
+                        <p class="index">Sensors</p>
+                        <p class="txtspc">
+                            Depth: <var id="depth">test</var> m <var id="depthTarget" style="font-size: 8pt;">test</var> <var id="depthSpeed">test</var>
+                            <br>Watertemp: <var id="watertemp">test</var> ℃
+                        </p>
+                    </div>
+                    <div class="elem3 pos3">
+                            <p class="index">Input linear</p>
+                            <p class="hrange">
+                                Surge
+                                <br><input id = "Surge"style="width: 140px;" type ="range" min = "-100.0" max = "100.0"/> <var id="spd_linear_x">test</var>
+                            </p>
+                            <p class="hrange">
+                                Sway
+                                <br><input id = "Sway" style="width: 140px;" type ="range" min = "-100" max = "100"/> <var id="spd_linear_y">test</var>
+                            </p>
+                            <p class = "hrange">
+                                Heave
+                                <br><input id = "Heave" style="width: 140px;" type ="range" min = "-100" max = "100"/> <var id="spd_linear_z">test</var>
+                            </p>
+                    </div>
+                    <div class="elem3 pos4">
+                            <p class="index">Input angular</p>
+                            <p class = "hrange">
+                                Roll
+                                <br><input id = "Roll" style="width: 140px;" type ="range" min = "-100" max = "100"/> <var id="spd_angular_x">test</var>
+                            </p>
+                            <p class = "hrange">
+                                Pitch
+                                <br><input id = "Pitch" style="width: 140px;" type ="range" min = "-100" max = "100"/> <var id="spd_angular_y">test</var>
+                            </p>
+                            <p class ="hrange">
+                                Yaw
+                                <br><input id = "Yaw" style="width: 140px;" type ="range" min = "-100" max = "100"/> <var id="spd_angular_z">test</var>
+                            </p>
+                    </div>
+            <!-- </div> -->
+        <script src="https://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+        <script src="https://static.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
+        <script src="GUI3.js"></script>
+    </body>
+</html>

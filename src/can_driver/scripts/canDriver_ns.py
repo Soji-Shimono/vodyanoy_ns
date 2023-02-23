@@ -8,6 +8,8 @@ from vehicle_msgs.msg import ThrustersCommand
 from sensor_msgs.msg import BatteryState
 from sensor_msgs.msg import Temperature
 from geometry_msgs.msg import Point
+from std_msgs.msg import ByteMultiArray
+from std_msgs.msg import Bool
 
 class thrusthandler:
 
@@ -60,7 +62,9 @@ th4 = thrusthandler(DEADBAND, 1, MAX_COMMAND_150W)
 th5 = thrusthandler(DEADBAND, 1, MAX_COMMAND_150W)
 th6 = thrusthandler(DEADBAND, -1, MAX_COMMAND_300W)
 
-def callback(message):
+actuatorEnable = False
+
+def thrustcallback(message):
     global thcom
     global last_b1,last_b2,last_b3,last_b4,last_b5,last_b6
     global th1,th2,th3,th4,th5,th6
@@ -98,7 +102,7 @@ def callback(message):
         _b1 = rate2com(message.Thruster6.parsentage,MAX_COMMAND_150W,DEADBAND)
 
         mode = 2
-        #print("mode2")
+        print("mode2")
     else:
         _b1 = int(message.Thruster1.rpm * 5)
         _b2 = int(message.Thruster2.rpm * 5)
@@ -135,6 +139,15 @@ def callback(message):
     #_b5 = 0
     #_b6 = 0
 
+    if actuatorEnable == False:
+        print("Thrusters disabled.")
+        _b1 = 0
+        _b2 = 0
+        _b3 = 0
+        _b4 = 0
+        _b5 = 0
+        _b6 = 0
+
     b1 = struct.pack('>h',_b1)
     b2 = struct.pack('>h',_b2)
     b3 = struct.pack('>h',_b3)
@@ -151,9 +164,11 @@ def callback(message):
     pub_th.publish(thcom)
 
     #print(b3[0],b3[1])
+    
     msg = can.Message(arbitration_id=0x73, dlc=1, data=[mode],extended_id=False)
     #print(msg)
     bus.send(msg)
+    #if actuatorEnable == True:
     msg = can.Message(arbitration_id=0x74, dlc=8, data=[b1[0], b1[1], b2[0], b2[1], b3[0], b3[1], b4[0], b4[1]],extended_id=False)
     bus.send(msg)
     #print(msg)
@@ -162,9 +177,17 @@ def callback(message):
     #print(msg)
     #print("Data_Received")
     #print("test")
-	#can.Message(timestamp=0.0, arbitration_id=0, is_extended_id=None, is_remote_frame=False, 
-	# is_error_frame=False, channel=None, dlc=None, data=None, is_fd=False, bitrate_switch=False, 
-	# error_state_indicator=False, extended_id=True, check=False)
+    #can.Message(timestamp=0.0, arbitration_id=0, is_extended_id=None, is_remote_frame=False, 
+    # is_error_frame=False, channel=None, dlc=None, data=None, is_fd=False, bitrate_switch=False, 
+    # error_state_indicator=False, extended_id=True, check=False)
+
+def actcallback(message):
+    global actuatorEnable
+    actuatorEnable = message.data
+
+def lightcallback(message):
+    msg = can.Message(arbitration_id=0x76, dlc=2, data=[int(message.data[0] * 255 / 100), int(message.data[1] * 255 / 100)], extended_id=False)
+    bus.send(msg)
 
 def rate2com(rate,LIMIT,band):
     t = int(rate / 100 * LIMIT)
@@ -217,7 +240,9 @@ def battInfo_update(msg):
 def main():
 	#Ros configuration
     rospy.init_node('can_driver')
-    sub = rospy.Subscriber('thrustcmd', ThrustersCommand,callback)
+    sub = rospy.Subscriber('thrustcmd', ThrustersCommand,thrustcallback)
+    sub2 = rospy.Subscriber('LightPower', ByteMultiArray,lightcallback)
+    sub3 = rospy.Subscriber('actEnable', Bool,actcallback)
     print('test2')
     pub_temp = rospy.Publisher('Temp',Temperature,queue_size=10)
     pub_batt = rospy.Publisher('BatteryState',BatteryState,queue_size=10)
@@ -229,19 +254,21 @@ def main():
     while 1:
         #print("rate")
         msg = bus.recv(0.5)
-        
-        if msg.arbitration_id ==20:
-            depthmsg.z = ((calctemp(msg,dT)/10.0) *100.0 -101325) / (1023 * 9.81)
-            pub_depth.publish(depthmsg)
-        elif msg.arbitration_id == 21:
-            tempmsg.temperature = calctemp(msg,dT)/100.0
-            pub_temp.publish(tempmsg)
-        elif msg.arbitration_id == 22:
-            battmsg.voltage = battInfo_update(msg)[0]
-            battmsg.current = battInfo_update(msg)[1]
-            pub_batt.publish(battmsg)
-        elif msg.arbitration_id == 23:
-            print(msg)
+        try:
+            if msg.arbitration_id ==20:
+                depthmsg.z = ((calctemp(msg,dT)/10.0) *100.0 -101325) / (1023 * 9.81)
+                pub_depth.publish(depthmsg)
+            elif msg.arbitration_id == 21:
+                tempmsg.temperature = calctemp(msg,dT)/100.0
+                pub_temp.publish(tempmsg)
+            elif msg.arbitration_id == 22:
+                battmsg.voltage = battInfo_update(msg)[0]
+                battmsg.current = battInfo_update(msg)[1]
+                pub_batt.publish(battmsg)
+            elif msg.arbitration_id == 23:
+                print(msg)
+        except:
+            print("message is not exist.")
         #r.sleep()        
 
 if __name__ == '__main__':

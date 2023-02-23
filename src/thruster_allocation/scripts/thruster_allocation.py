@@ -12,7 +12,9 @@ import collections as cl
 twFrc = Twist()
 rpmORpwm = "rate"
 thParam = np.array([1,2,3,4,5,6,7]).reshape(1,7)
-node_cycle  = 50.0
+node_cycle  = 50.0 #Hz
+r = 0.7
+_rate = [0,0,0,0,0,0]
 
 def getparam():
     global thParam
@@ -60,6 +62,8 @@ def f2Rate(f,thParam):
         rate = rate / ( np.max(abs(rate)) / 100.0 )
     return rate
 def thf2thcmd(thf,thParam,rpmORpwm):
+    global r
+    global _rate
     thcmd = ThrustersCommand()
     if rpmORpwm == "rpm":
         #rpmCommand mode
@@ -75,13 +79,21 @@ def thf2thcmd(thf,thParam,rpmORpwm):
         #pwmCommand mode
         rate = f2Rate(thf,thParam)
         #print(rate)
-        thcmd.Thruster1.parsentage = rate[0]
-        thcmd.Thruster2.parsentage = rate[1]
-        thcmd.Thruster3.parsentage = rate[2]
-        thcmd.Thruster4.parsentage = rate[3]
-        thcmd.Thruster5.parsentage = rate[4]
-        thcmd.Thruster6.parsentage = rate[5]
+        thcmd.Thruster1.parsentage = r * rate[0] +  (1 - r) * _rate[0]
+        thcmd.Thruster2.parsentage = r * rate[1] +  (1 - r) * _rate[1]
+        thcmd.Thruster3.parsentage = r * rate[2] +  (1 - r) * _rate[2]
+        thcmd.Thruster4.parsentage = r * rate[3] +  (1 - r) * _rate[3]
+        thcmd.Thruster5.parsentage = r * rate[4] +  (1 - r) * _rate[4]
+        thcmd.Thruster6.parsentage = r * rate[5] +  (1 - r) * _rate[5]
+
+        _rate[0] = thcmd.Thruster1.parsentage
+        _rate[1] = thcmd.Thruster2.parsentage
+        _rate[2] = thcmd.Thruster3.parsentage
+        _rate[3] = thcmd.Thruster4.parsentage
+        _rate[4] = thcmd.Thruster5.parsentage
+        _rate[5] = thcmd.Thruster6.parsentage
         thcmd.mode = "rate"
+        print(rate[5])
     return thcmd
 def thrustallocation(f,im):
     _f = np.array([f.linear.x, f.linear.y, f.linear.z, f.angular.x, f.angular.y, f.angular.z])
